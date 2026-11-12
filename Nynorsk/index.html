@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nynorsk – Norsk vg3</title>
+  <style>
+    :root { color-scheme: light; --fjord: #1f6f78; --fjell: #2c3a47; --bg: #f7f9f8; --line: #dde5e4; --muted: #5d6b75; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: #22303a; font: 1.08rem/1.6 system-ui, sans-serif; }
+    header { background: linear-gradient(135deg, #134a52, var(--fjord)); color: white; padding: 2rem 1.25rem; }
+    header > div, main { max-width: 900px; margin: 0 auto; }
+    header a { color: #d7f0ef; text-decoration: none; font-weight: 600; }
+    h1, h2 { font-family: Georgia, serif; line-height: 1.2; }
+    h1 { margin: 1rem 0 .4rem; font-size: clamp(2rem, 5vw, 3rem); }
+    header p { margin: 0; color: #e3f2f2; }
+    main { padding: 2rem 1.25rem; }
+    .ressurser { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+    .kort { display: block; padding: 1.4rem; background: white; border: 1px solid var(--line); border-top: 5px solid var(--fjord); border-radius: 12px; color: inherit; text-decoration: none; box-shadow: 0 8px 24px rgba(20,50,60,.08); }
+    .kort:hover, .kort:focus-visible { transform: translateY(-2px); border-color: var(--fjord); }
+    .kort h2 { margin: 0; color: var(--fjell); font-size: 1.4rem; }
+    .kort p { margin: .5rem 0 0; color: var(--muted); }
+    .pil { display: inline-block; margin-top: 1rem; color: var(--fjord); font-weight: 700; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <a href="../">← Tilbake til forsiden</a>
+      <h1>Nynorsk</h1>
+      <p>Øv på nynorsk med grammatikk, ord og spel.</p>
+    </div>
+  </header>
+  <main>
+    <section class="ressurser" aria-label="Nynorskressursar">
+      <a class="kort" href="nynorskstigen.html">
+        <h2>Nynorskstigen</h2>
+        <p>Tren på nynorsk grammatikk og ordtilfang gjennom interaktive øvingar.</p>
+        <span class="pil">Start Nynorskstigen →</span>
+      </a>
+      <a class="kort" href="nynorsk-jakta.html">
+        <h2>Nynorsk-jakta</h2>
+        <p>Fang nynorskorda og øv på å skilje nynorsk frå bokmål i eit spel.</p>
+        <span class="pil">Start Nynorsk-jakta →</span>
+      </a>
+    </section>
+  </main>
+</body>
+</html>
