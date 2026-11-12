@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Realisme Rush – spillet om realismen 1850–1940</title>
+<style>
+  :root{
+    --bg1:#1c1410; --bg2:#3a2a1c; --card:#fffaf2; --ink:#2b2420;
+    --p1:#c98b3e; --p2:#b3453a; --p3:#3f6b52; --p4:#3d5a80;
+    --gold:#e8b04b; --life:#e05c4f;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0; min-height:100vh; font-family:"Trebuchet MS","Segoe UI",sans-serif;
+    background:radial-gradient(circle at 30% 20%, #4a3524, #1c1410 70%);
+    color:var(--card); display:flex; flex-direction:column; align-items:center;
+    padding:1.2rem .8rem 2.5rem; overflow-x:hidden;
+  }
+  h1{
+    font-family:Georgia,serif; font-size:1.7rem; margin:.2rem 0 .1rem; text-align:center;
+    background:linear-gradient(90deg,var(--gold),#fff2d0); -webkit-background-clip:text;
+    background-clip:text; color:transparent; letter-spacing:.02em;
+  }
+  .subtitle{color:#d8c4a8; font-size:.9rem; margin-bottom:1.2rem; text-align:center; max-width:520px;}
+
+  /* --- Start screen --- */
+  .screen{width:100%; max-width:560px;}
+  #startScreen, #endScreen{
+    background:rgba(255,250,242,.06); border:1px solid rgba(255,255,255,.12); border-radius:16px;
+    padding:1.6rem 1.4rem; text-align:center; backdrop-filter:blur(2px);
+  }
+  #startScreen ul{ text-align:left; margin:1rem 0; padding-left:1.2rem; color:#e9d9c2; font-size:.92rem;}
+  #startScreen li{margin-bottom:.4rem;}
+  .legend{display:flex; flex-wrap:wrap; gap:.5rem; justify-content:center; margin:1rem 0;}
+  .legend span{
+    font-size:.78rem; font-weight:700; color:#fff; padding:.3rem .65rem; border-radius:999px;
+  }
+  .leg-p1{background:var(--p1);} .leg-p2{background:var(--p2);} .leg-p3{background:var(--p3);} .leg-p4{background:var(--p4);}
+
+  button.big{
+    font-family:inherit; font-size:1.1rem; font-weight:700; color:#2b1c08; background:linear-gradient(135deg,var(--gold),#f7d38a);
+    border:none; padding:.75rem 1.8rem; border-radius:999px; cursor:pointer; margin-top:.6rem;
+    box-shadow:0 4px 14px rgba(0,0,0,.35); transition:.15s;
+  }
+  button.big:hover{transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.45);}
+
+  /* --- HUD --- */
+  #gameScreen{display:none; width:100%; max-width:560px;}
+  .hud{display:flex; justify-content:space-between; align-items:center; margin-bottom:.7rem; font-size:.95rem;}
+  .hud .lives span{font-size:1.1rem; margin-right:2px;}
+  .hud .score{font-weight:700; color:var(--gold);}
+  .hud .streak{font-size:.82rem; color:#d8c4a8;}
+
+  .timerbar-track{height:8px; background:rgba(255,255,255,.15); border-radius:6px; overflow:hidden; margin-bottom:1rem;}
+  .timerbar-fill{height:100%; background:linear-gradient(90deg,var(--gold),#f7d38a); width:100%; transition:width .1s linear;}
+
+  .card{
+    background:var(--card); color:var(--ink); border-radius:16px; padding:1.6rem 1.3rem; min-height:130px;
+    display:flex; align-items:center; justify-content:center; text-align:center; font-size:1.12rem;
+    font-weight:600; box-shadow:0 10px 24px rgba(0,0,0,.35); margin-bottom:1.2rem; line-height:1.4;
+    animation:pop .22s ease;
+  }
+  @keyframes pop{from{transform:scale(.94); opacity:0;} to{transform:scale(1); opacity:1;}}
+
+  .answers{display:grid; grid-template-columns:1fr 1fr; gap:.7rem;}
+  .ans-btn{
+    font-family:inherit; font-size:.98rem; font-weight:700; color:#fff; border:none; border-radius:12px;
+    padding:.85rem .6rem; cursor:pointer; box-shadow:0 3px 10px rgba(0,0,0,.3); transition:.12s;
+  }
+  .ans-btn:hover{transform:translateY(-2px);}
+  .ans-btn:active{transform:translateY(0);}
+  .ans-p1{background:var(--p1);} .ans-p2{background:var(--p2);} .ans-p3{background:var(--p3);} .ans-p4{background:var(--p4);}
+  .ans-btn.correct{outline:3px solid #7CFC9A; box-shadow:0 0 18px #7CFC9A;}
+  .ans-btn.wrong{outline:3px solid #ff8a80; opacity:.75;}
+  .ans-btn[disabled]{cursor:default;}
+
+  .feedback{
+    min-height:2.6em; text-align:center; margin-top:.9rem; font-size:.9rem; color:#f2e6d0; padding:0 .4rem;
+  }
+  .feedback.good{color:#9dfcb0;} .feedback.bad{color:#ffb3a8;}
+
+  #endScreen h2{color:var(--gold); font-family:Georgia,serif; margin-top:0;}
+  .final-score{font-size:2.2rem; font-weight:800; color:#fff; margin:.3rem 0;}
+  .hs{color:#d8c4a8; font-size:.95rem; margin-bottom:.8rem;}
+
+  @media (max-width:400px){
+    .answers{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<h1>🏛️ Realisme Rush</h1>
+<p class="subtitle">Klassifiser fakta, sitater og forfattere fra realismen (1850–1940) riktig – før tiden renner ut!</p>
+
+<div class="screen" id="startScreen">
+  <p>Du får en påstand om litteraturen fra 1850–1940. Velg hvilken under-periode den hører til, før tidsuret går ut. Feil svar eller tidsutløp koster ett liv. Du har tre liv – hvor langt kommer du?</p>
+  <div class="legend">
+    <span class="leg-p1">Poetisk realisme 1850–70</span>
+    <span class="leg-p2">Kritisk realisme 1870–80</span>
+    <span class="leg-p3">Naturalisme 1880–90</span>
+    <span class="leg-p4">Etisk realisme 1900–40</span>
+  </div>
+  <ul>
+    <li>❤️ 3 liv – spillet er slutt når livene er brukt opp.</li>
+    <li>⏱️ Tidsuret blir strammere jo lenger du kommer.</li>
+    <li>🔥 Svar riktig på rad for streak-bonus i poengsummen.</li>
+  </ul>
+  <button class="big" id="startBtn">Start spillet</button>
+</div>
+
+<div class="screen" id="gameScreen">
+  <div class="hud">
+    <div class="lives" id="lives"></div>
+    <div class="score">Poeng: <span id="scoreVal">0</span></div>
+    <div class="streak" id="streakVal"></div>
+  </div>
+  <div class="timerbar-track"><div class="timerbar-fill" id="timerFill"></div></div>
+  <div class="card" id="questionCard"></div>
+  <div class="answers" id="answersWrap"></div>
+  <div class="feedback" id="feedback"></div>
+</div>
+
+<div class="screen" id="endScreen" style="display:none;">
+  <h2>Spillet er over!</h2>
+  <div class="final-score" id="finalScore">0</div>
+  <div class="hs" id="highscoreLine"></div>
+  <button class="big" id="restartBtn">Spill igjen</button>
+</div>
+
+<script>
+const PERIODS = {
+  poetisk:      { label:"Poetisk realisme",  sub:"1850–1870", cls:"ans-p1" },
+  kritisk:      { label:"Kritisk realisme",  sub:"1870–1880", cls:"ans-p2" },
+  naturalisme:  { label:"Naturalisme",       sub:"1880–1890", cls:"ans-p3" },
+  etisk:        { label:"Etisk realisme",    sub:"1900–1940", cls:"ans-p4" }
+};
+const ORDER = ["poetisk","kritisk","naturalisme","etisk"];
+
+const QUESTIONS = [
+  { period:"poetisk", text:"Litteraturen skulle være nyttig for samfunnet, men hadde fortsatt trekk som pekte tilbake mot det romantiske idealet.", explain:"Tendenslitteratur i poetisk realisme (1850–70)." },
+  { period:"poetisk", text:"Bjørnstjerne Bjørnson ønsket å oppdra leserne sine i en god kristen moral.", explain:"Idealistiske bondefortellinger, poetisk realisme." },
+  { period:"poetisk", text:"Camilla Collett skrev romanen «Amtmannens døtre».", explain:"Collett kalles det moderne gjennombruddets mor." },
+  { period:"poetisk", text:"Regnes som «det moderne gjennombruddets mor» – den første som brøt med romantisk diktning.", explain:"Dette er Camilla Collett." },
+  { period:"poetisk", text:"En kvinne mister råderetten over egen økonomi til svogeren sin da hun blir enke.", explain:"Camilla Colletts egen erfaring, brukt i forfatterskapet hennes." },
+  { period:"poetisk", text:"Bjørnsons skuespill «En fallitt» (1875) skildrer et borgerlig hjem for første gang i norsk litteratur.", explain:"Verket regnes som en bro over mot kritisk realisme." },
+
+  { period:"kritisk", text:"Georg Brandes krevde at litteraturen skulle «sette problemer under debatt».", explain:"Selve kjernen i det moderne gjennombrudd, 1870–80." },
+  { period:"kritisk", text:"Alexander Kielland kritiserte kirken, borgerskapets moral og skolesystemet i romanene sine.", explain:"Sentral forfatter i kritisk realisme." },
+  { period:"kritisk", text:"Henrik Ibsens drama «Gjengangere» avdekker dobbeltmoral og pliktløgner i et borgerlig hjem.", explain:"Handler om hvordan fortidens synder («gjengangere») rammer neste generasjon." },
+  { period:"kritisk", text:"Skolesystemet kritiseres for å opprettholde klasseskiller i samfunnet.", explain:"Tema 4 i kritisk realisme: kritikk av skole og samfunnsforskjeller." },
+  { period:"kritisk", text:"Borgerskapet framstilles som opptatt av ytre anstendighet, mens de indre verdiene er hule eller hyklerske.", explain:"Kritikk av borgerskapets moral." },
+
+  { period:"naturalisme", text:"Mennesket kunne ikke styre sin egen skjebne – den var forutbestemt av arv og miljø.", explain:"Et av hovedkjennetegnene ved naturalismen (1880–90)." },
+  { period:"naturalisme", text:"Virkeligheten skulle skildres nesten fotografisk.", explain:"Naturalistisk fortellerteknikk." },
+  { period:"naturalisme", text:"Amalie Skrams romanserie «Hellemyrsfolket» viser hvordan arv og fattigdom går i arv gjennom generasjoner.", explain:"Tema: arvens forbannelse." },
+  { period:"naturalisme", text:"Christian Krohgs roman «Albertine» ble forbudt av norske myndigheter dagen etter utgivelsen.", explain:"Romanen handler om en fattig syerske som tvinges inn i prostitusjon." },
+  { period:"naturalisme", text:"Samfunnet delte kvinner i to kategorier: dydige, godt gifte kvinner og «slike» kvinner.", explain:"Naturalismens tema om kvinner og seksualitet." },
+  { period:"naturalisme", text:"Kristiania-bohemen praktiserte fri kjærlighet og utfordret samfunnets syn på seksualitet og samliv.", explain:"Christian Krohg var en sentral skikkelse her." },
+  { period:"naturalisme", text:"Amalie Skram ble giftet bort til en mye eldre skipskaptein og senere innlagt på psykiatrisk sykehus flere ganger.", explain:"Hun brukte eget «levd liv» i diktningen." },
+
+  { period:"etisk", text:"Perioden kalles også nyrealismen.", explain:"Etisk realisme (1900–1940) har dette alternative navnet." },
+  { period:"etisk", text:"Forfatterne går dypere inn i sjelelivet til karakterene enn det kritisk realisme gjorde.", explain:"Karakterenes sammensatte indre liv skildres grundig." },
+  { period:"etisk", text:"Sigrid Undset skrev romantrilogien om Kristin Lavransdatter og fikk Nobelprisen i litteratur i 1928.", explain:"Sentral forfatter i etisk realisme." },
+  { period:"etisk", text:"«Menneskenes hjerter forandres aldeles intet i alle dager.»", explain:"Sitat av Sigrid Undset om tidløse menneskelige dilemmaer." },
+  { period:"etisk", text:"Konflikten mellom gudstro og egne lyster er et sentralt tema.", explain:"Sigrid Undsets forfatterskap, bl.a. i «Jenny» (1911)." },
+  { period:"etisk", text:"Olav Duun skrev slektsromaner fra bonde- og fiskemiljø, blant annet «Juvikfolket».", explain:"Handlingen foregår ofte i Namdalen, der Duun selv vokste opp." },
+  { period:"etisk", text:"Godt liv betyr å ha en fast indre kjerne i gudstro og følge religionens faste regler.", explain:"Undsets kristne, antimoderne livssyn." }
+];
+
+let deck = [];
+let idx = 0;
+let score = 0;
+let lives = 3;
+let streak = 0;
+let timeLimit = 9000;
+let timerStart, timerRAF;
+let answered = false;
+
+const startScreen = document.getElementById('startScreen');
+const gameScreen = document.getElementById('gameScreen');
+const endScreen = document.getElementById('endScreen');
+const questionCard = document.getElementById('questionCard');
+const answersWrap = document.getElementById('answersWrap');
+const feedback = document.getElementById('feedback');
+const scoreVal = document.getElementById('scoreVal');
+const livesEl = document.getElementById('lives');
+const streakVal = document.getElementById('streakVal');
+const timerFill = document.getElementById('timerFill');
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function beep(freq, dur, type){
+  try{
+    const ctxA = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctxA.createOscillator();
+    const g = ctxA.createGain();
+    o.type = type||'sine';
+    o.frequency.value = freq;
+    g.gain.value = 0.06;
+    o.connect(g); g.connect(ctxA.destination);
+    o.start();
+    o.stop(ctxA.currentTime + dur);
+    setTimeout(()=>ctxA.close(), (dur*1000)+80);
+  }catch(e){}
+}
+
+function renderLives(){
+  livesEl.innerHTML = '';
+  for(let i=0;i<3;i++){
+    const s = document.createElement('span');
+    s.textContent = i < lives ? '❤️' : '🖤';
+    livesEl.appendChild(s);
+  }
+}
+
+function newDeck(){
+  deck = shuffle(QUESTIONS);
+  idx = 0;
+}
+
+function startGame(){
+  score = 0; lives = 3; streak = 0; timeLimit = 9000;
+  scoreVal.textContent = '0';
+  streakVal.textContent = '';
+  newDeck();
+  startScreen.style.display = 'none';
+  endScreen.style.display = 'none';
+  gameScreen.style.display = 'block';
+  renderLives();
+  nextQuestion();
+}
+
+function nextQuestion(){
+  if(idx >= deck.length){ deck = shuffle(deck); idx = 0; }
+  answered = false;
+  feedback.textContent = '';
+  feedback.className = 'feedback';
+  const q = deck[idx++];
+  questionCard.textContent = q.text;
+  answersWrap.innerHTML = '';
+  ORDER.forEach(key=>{
+    const p = PERIODS[key];
+    const b = document.createElement('button');
+    b.className = 'ans-btn ' + p.cls;
+    b.innerHTML = p.label + '<br><small style="font-weight:400;opacity:.85;">' + p.sub + '</small>';
+    b.addEventListener('click', ()=>handleAnswer(key, q, b));
+    answersWrap.appendChild(b);
+  });
+  streakVal.textContent = streak > 1 ? ('🔥 Streak: ' + streak) : '';
+  runTimer(q);
+}
+
+function runTimer(q){
+  cancelAnimationFrame(timerRAF);
+  timerStart = performance.now();
+  const limit = timeLimit;
+  function tick(now){
+    const elapsed = now - timerStart;
+    const pct = Math.max(0, 1 - elapsed/limit);
+    timerFill.style.width = (pct*100) + '%';
+    if(pct <= 0 && !answered){
+      handleAnswer(null, q, null, true);
+      return;
+    }
+    if(!answered) timerRAF = requestAnimationFrame(tick);
+  }
+  timerRAF = requestAnimationFrame(tick);
+}
+
+function handleAnswer(chosenKey, q, btnEl, timedOut){
+  if(answered) return;
+  answered = true;
+  cancelAnimationFrame(timerRAF);
+  const buttons = answersWrap.querySelectorAll('.ans-btn');
+  buttons.forEach(b=>b.setAttribute('disabled','true'));
+  const correctKey = q.period;
+  buttons.forEach(b=>{
+    // match by comparing label text prefix
+  });
+  // find correct + chosen buttons by index order
+  const correctIdx = ORDER.indexOf(correctKey);
+  const correctBtn = buttons[correctIdx];
+  correctBtn.classList.add('correct');
+
+  if(!timedOut && chosenKey === correctKey){
+    streak++;
+    const bonus = Math.min(streak*3, 30);
+    const gained = 10 + bonus;
+    score += gained;
+    scoreVal.textContent = score;
+    feedback.textContent = '✅ Riktig! (+' + gained + ' poeng) ' + q.explain;
+    feedback.classList.add('good');
+    beep(720,0.12,'triangle');
+  } else {
+    streak = 0;
+    lives--;
+    renderLives();
+    if(btnEl) btnEl.classList.add('wrong');
+    feedback.textContent = (timedOut ? '⏱️ Tiden løp ut! ' : '❌ Feil. ') + 'Riktig svar: ' + PERIODS[correctKey].label + '. ' + q.explain;
+    feedback.classList.add('bad');
+    beep(180,0.25,'sawtooth');
+  }
+
+  timeLimit = Math.max(4500, timeLimit - 150);
+
+  setTimeout(()=>{
+    if(lives <= 0){
+      endGame();
+    } else {
+      nextQuestion();
+    }
+  }, 1650);
+}
+
+function endGame(){
+  gameScreen.style.display = 'none';
+  endScreen.style.display = 'block';
+  document.getElementById('finalScore').textContent = score;
+  const hsKey = 'realisme_rush_highscore';
+  const prevHS = parseInt(localStorage.getItem(hsKey) || '0', 10);
+  let hsLine;
+  if(score > prevHS){
+    localStorage.setItem(hsKey, String(score));
+    hsLine = '🏆 Ny rekord! Forrige beste: ' + prevHS;
+  } else {
+    hsLine = 'Beste poengsum så langt: ' + prevHS;
+  }
+  document.getElementById('highscoreLine').textContent = hsLine;
+}
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('restartBtn').addEventListener('click', startGame);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="Silja Nordvik">
+<title>DU MÅ IKKE SOVE – et 8-bit læringsspill | Silja Nordvik</title>
+<!-- Laget av Silja Nordvik – norsk vg3, tema: Krig og uro -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b1e; --panel:#15153a; --ink:#f4f1de; --dim:#9a98c4;
+    --gold:#ffd23f; --red:#e63946; --green:#4ade80; --blue:#5aa9ff; --ember:#ff7a1a;
+    --border:#f4f1de;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'VT323','Courier New',monospace;font-size:24px;line-height:1.25}
+  body{min-height:100vh;display:flex;flex-direction:column;align-items:center;
+       background-image:radial-gradient(#1c1c48 1px,transparent 1px);background-size:6px 6px}
+  .pixel{font-family:'Press Start 2P','Courier New',monospace}
+  #game{width:min(960px,100%);padding:14px;flex:1}
+  header.hud{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+       border:4px solid var(--border);background:var(--panel);padding:8px 12px;box-shadow:6px 6px 0 #000;margin-bottom:12px}
+  .hud .pixel{font-size:11px}
+  .lamps span{display:inline-block;width:18px;height:18px;margin-right:4px;background:var(--gold);
+       box-shadow:inset -3px -3px 0 #c99a00, 0 0 8px var(--gold)}
+  .lamps span.off{background:#333;box-shadow:inset -3px -3px 0 #1a1a1a}
+  canvas{display:block;width:100%;image-rendering:pixelated;border:4px solid var(--border);box-shadow:6px 6px 0 #000;background:#000}
+  .box{border:4px solid var(--border);background:var(--panel);padding:16px 18px;box-shadow:6px 6px 0 #000;margin-top:14px}
+  h1,h2,h3{font-family:'Press Start 2P','Courier New',monospace;line-height:1.5;margin:0 0 12px}
+  h1{font-size:clamp(18px,4vw,30px);color:var(--gold);text-shadow:4px 4px 0 #7a1020}
+  h2{font-size:clamp(13px,2.4vw,17px);color:var(--gold)}
+  h3{font-size:12px;color:var(--blue)}
+  p{margin:0 0 10px}
+  .btn{font-family:'Press Start 2P','Courier New',monospace;font-size:12px;cursor:pointer;color:#111;background:var(--gold);
+       border:none;padding:12px 16px;box-shadow:inset -4px -4px 0 #b88d00, 4px 4px 0 #000;margin:6px 6px 0 0}
+  .btn:hover{filter:brightness(1.12)} .btn:active{transform:translate(2px,2px);box-shadow:inset -4px -4px 0 #b88d00, 2px 2px 0 #000}
+  .btn.ghost{background:#2c2c66;color:var(--ink);box-shadow:inset -4px -4px 0 #1a1a44, 4px 4px 0 #000}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .opts{display:grid;gap:10px;margin-top:10px}
+  .opt{font-family:'VT323',monospace;font-size:24px;text-align:left;cursor:pointer;color:var(--ink);background:#22224f;
+       border:3px solid #6b6bb0;padding:8px 12px;box-shadow:4px 4px 0 #000}
+  .opt:hover:not(:disabled){border-color:var(--gold)}
+  .opt .k{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);margin-right:10px}
+  .opt.right{background:#13502e;border-color:var(--green)} .opt.wrong{background:#5c1520;border-color:var(--red)}
+  .opt:disabled{cursor:default}
+  .feedback{margin-top:12px;padding:10px 12px;border-left:6px solid var(--blue);background:#101030}
+  .feedback.ok{border-color:var(--green)} .feedback.bad{border-color:var(--red)}
+  .tag{display:inline-block;font-family:'Press Start 2P',monospace;font-size:9px;padding:4px 6px;background:#2c2c66;margin-bottom:8px}
+  .match{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .match .col{display:grid;gap:8px;align-content:start}
+  .chip{font-family:'VT323',monospace;font-size:22px;text-align:left;cursor:pointer;background:#22224f;color:var(--ink);
+        border:3px solid #6b6bb0;padding:6px 10px;box-shadow:3px 3px 0 #000}
+  .chip.sel{border-color:var(--gold);background:#3d3a10}
+  .chip.done{background:#13502e;border-color:var(--green);cursor:default}
+  .chip.shake{animation:shake .3s}
+  @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+  .order-list{display:grid;gap:8px;margin-top:10px}
+  .slot{min-height:40px;border:3px dashed #6b6bb0;padding:6px 10px;display:flex;align-items:center;gap:10px}
+  .slot .n{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold)}
+  textarea,input[type=text]{width:100%;font-family:'VT323',monospace;font-size:24px;background:#0d0d26;color:var(--ink);
+        border:3px solid #6b6bb0;padding:8px;outline:none}
+  textarea:focus,input:focus{border-color:var(--gold)}
+  textarea{min-height:150px;resize:vertical}
+  .small{font-size:20px;color:var(--dim)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .map{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+  .node{text-align:center;border:4px solid #6b6bb0;background:#1a1a44;padding:10px 6px;cursor:pointer;box-shadow:4px 4px 0 #000;color:var(--ink)}
+  .node .pixel{font-size:9px;display:block;margin-top:6px;line-height:1.5}
+  .node.locked{opacity:.35;cursor:not-allowed}
+  .node.done{border-color:var(--green)} .node.cur{border-color:var(--gold);animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{border-color:#6b6bb0}}
+  .node .ico{font-size:30px}
+  .progress{height:14px;background:#000;border:3px solid var(--border);margin-top:10px}
+  .progress > div{height:100%;background:repeating-linear-gradient(90deg,var(--gold) 0 10px,#e0b400 10px 20px)}
+  footer{font-family:'Press Start 2P',monospace;font-size:9px;color:var(--dim);padding:14px;text-align:center;line-height:1.8}
+  .cert{background:#f4f1de;color:#1b1b1b;border:8px double #1b1b1b;padding:24px}
+  .cert h1{color:#7a1020;text-shadow:none}
+  .cert .small{color:#444}
+  .hidden{display:none!important}
+  .zzz{position:fixed;pointer-events:none;font-family:'Press Start 2P',monospace;color:var(--blue);font-size:26px;animation:zz 1.2s forwards;z-index:10}
+  @keyframes zz{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-80px)}}
+  .fact{background:#2a1a08;border:3px solid var(--ember);padding:10px 12px;margin-top:12px}
+  .fact b{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--ember)}
+  @media print{
+    body{background:#fff} header.hud,canvas,footer,.btn,.noprint{display:none!important}
+    .box{box-shadow:none;border:none}
+  }
+</style>
+</head>
+<body>
+<div id="game">
+  <header class="hud" id="hud">
+    <div class="pixel" id="hudTitle">DU MÅ IKKE SOVE</div>
+    <div class="row">
+      <span class="pixel" style="font-size:9px">VÅKENHET</span>
+      <span class="lamps" id="lamps"></span>
+    </div>
+    <div class="pixel" id="hudScore">POENG 0</div>
+    <button class="btn ghost" id="muteBtn" title="Lyd av/på" style="padding:8px 10px;margin:0">♪ PÅ</button>
+  </header>
+  <canvas id="scene" width="320" height="120"></canvas>
+  <main id="screen"></main>
+</div>
+<footer>
+  Laget av Silja Nordvik · Norsk vg3 · Tema: Krig og uro 1930–1950<br>
+  Diktet «Du må ikke sove» (Arnulf Øverland, 1936–37) – les hele diktet i din egen tekst.
+</footer>
+
+<script>
+/* =========================================================
+   DU MÅ IKKE SOVE – et 8-bit læringsspill
+   Laget av Silja Nordvik
+   ========================================================= */
+
+const LEVELS = [
+ {
+  id:'natt', icon:'🌙', title:'BRETT 1: NATTEN', short:'Natten', scene:'night',
+  intro:`Det er natt. Du er det lyriske jeget i diktet. Du våkner av en underlig drøm – en stemme snakker til deg fra mørket.<br><br><b>Oppdrag:</b> Finn ut hva som faktisk skjer i diktet. Svarer du feil, blir du trøttere… Hvis alle lampene slukner, sovner du!`,
+  tasks:[
+   {type:'mc', q:'Hvordan begynner diktet?',
+    options:['Jeg-personen våkner om natten etter en underlig drøm, og en stemme taler til ham.',
+             'En soldat ligger i en skyttergrav og skriver brev hjem.',
+             'Jeg-personen leser om Hitler i avisen ved frokostbordet.',
+             'En taler står på et torg og roper til folkemengden.'],
+    correct:0, explain:'Diktet har en <b>drømmeramme</b>: Det starter om natten med en drøm og en stemme, og slutter ved morgengry. Drømmen gjør det mulig å la en «stemme» fortelle om det folk ikke vil se.'},
+   {type:'mc', q:'Hvem er det stemmen i drømmen snakker på vegne av?',
+    options:['Fanger som sitter innesperret i mørket og blir mishandlet og drept.',
+             'Politikere som vil vinne neste valg.',
+             'Bønder som har mistet avlingene sine.',
+             'Soldater som har vunnet en stor seier.'],
+    correct:0, explain:'Stemmen tilhører en av <b>fangene</b> – mennesker som sitter i mørke celler og kjellere. Diktet sier «vi» om dem. De representerer ofrene for terroren i Europa på 1930-tallet.'},
+   {type:'mc', q:'Hva er fangenes største klage mot omverdenen?',
+    options:['At ingen hører dem, og at folk ikke vil tro at det som skjer er virkelig.',
+             'At maten i fengselet er dårlig.',
+             'At de ikke får stemme ved valg.',
+             'At de ikke får lov til å skrive dikt.'],
+    correct:0, explain:'Fangene er usynlige for verden. Folk avfeier det som skjer som umulig – «sånt gjør ikke mennesker». Det er nettopp denne <b>vantroen og likegyldigheten</b> diktet angriper.'},
+   {type:'mc', q:'Hvem er «du» i diktet – den som ikke må sove?',
+    options:['Leseren – alle oss som lever trygt og ikke bryr oss om andres lidelse.',
+             'Hitler.',
+             'En bestemt fangevokter.',
+             'Dikterens mor.'],
+    correct:0, explain:'Diktet bruker <b>direkte tiltale</b>. «Du» er leseren – folk flest i Norge og Europa. Det gjør budskapet personlig: Det er DU som har ansvar.'},
+   {type:'mc', q:'Hvordan slutter diktet?',
+    options:['Det blir morgen. Himmelen er rød som blod og brann, og jeg-personen skjønner at Europa brenner.',
+             'Jeg-personen sovner igjen og glemmer drømmen.',
+             'Fangene blir satt fri, og alle feirer.',
+             'Hitler blir arrestert.'],
+    correct:0, explain:'Slutten er mørk: Morgengryet farges rødt som <b>blod og brann</b>. Natten slutter, men det som kommer er krig. Diktet ender med ropet «Europa brenner!».'}
+  ],
+  fact:'Arnulf Øverland (1889–1968) var en av Norges mest kjente lyrikere. Han skrev «Du må ikke sove» i 1936, og diktet kom på trykk i 1937 – flere år før andre verdenskrig brøt ut.'
+ },
+ {
+  id:'kjeller', icon:'🔒', title:'BRETT 2: KJELLEREN', short:'Kjelleren', scene:'cellar',
+  intro:`Stemmen trekker deg ned i kjelleren – mørke celler, fanger og frykt.<br><br><b>Oppdrag:</b> Diktet er fullt av <b>bilder og symboler</b>. Koble hvert bilde til det det betyr. Klikk først på et bilde til venstre, så på betydningen til høyre.`,
+  tasks:[
+   {type:'match', q:'Koble bildet til betydningen',
+    pairs:[
+     ['Å sove','Å være likegyldig – lukke øynene for uretten'],
+     ['Drømmen','Sannheten folk vil avfeie som «bare en vond drøm»'],
+     ['Kjelleren og mørket','Overgrep som skjer i skjul, uten at verden ser'],
+     ['Skolebarn som marsjerer med flagg','Militarisme – barn oppdras til krig'],
+     ['Den røde morgenhimmelen','Krigen som er i ferd med å komme'],
+     ['«Europa brenner!»','Hele Europa på vei inn i krig og ødeleggelse']
+    ],
+    explain:'Øverland bruker <b>søvn og våkenhet</b> som det bærende bildet: Å sove er å være likegyldig, å våkne er å forstå og handle. Natten → morgen-bevegelsen viser at tiden renner ut.'},
+   {type:'mc', q:'Hvorfor tror du Øverland valgte SØVN som hovedbilde?',
+    options:['Fordi søvn er noe alle kjenner – man er tilstede, men ser ingenting. Slik var mange mennesker overfor nazismen.',
+             'Fordi han selv hadde søvnproblemer.',
+             'Fordi dikt alltid skal handle om natten.',
+             'Fordi det var forbudt å skrive om krig.'],
+    correct:0, explain:'Et godt litterært bilde gjør noe abstrakt (likegyldighet) <b>konkret og gjenkjennelig</b>. Alle vet hvordan det er å sove trygt – mens noe forferdelig skjer utenfor.'},
+   {type:'mc', q:'Diktet nevner skolebarn som lærer å marsjere og synge, og gutter som drømmer om å bli helter med flagg og sabel. Hva kritiserer Øverland her?',
+    options:['At unge mennesker blir lurt til å tro at krig er ærefullt og heltemodig.',
+             'At barn ikke får nok gymtimer.',
+             'At skolene ikke lærer barna å synge.',
+             'At flagg er for dyre.'],
+    correct:0, explain:'Øverland angriper <b>krigsromantikken og propagandaen</b>. Bak ord som ære og heltemot venter piggtråd, stålregn og død. Nazistene brukte nettopp ungdomsorganisasjoner og parader for å forberede barn på krig.'}
+  ],
+  fact:'Nazistene satte politiske motstandere, jøder, romfolk, homofile og andre i fengsler og konsentrasjonsleirer allerede fra 1933. Mye av dette skjedde «i kjelleren» – skjult, men mange i Europa visste nok mer enn de ville innrømme.'
+ },
+ {
+  id:'stemme', icon:'📢', title:'BRETT 3: STEMMEN', short:'Stemmen', scene:'voice',
+  intro:`Stemmen blir sterkere. Den roper, maner og advarer.<br><br><b>Oppdrag:</b> Avslør hvilke <b>retoriske og språklige virkemidler</b> stemmen bruker for å få deg til å våkne.`,
+  tasks:[
+   {type:'mc', q:'Uttrykket «Du må ikke …» gjentas mange ganger i diktet. Hva heter dette virkemiddelet?',
+    options:['Gjentakelse (anafor når det står i starten av linjer/strofer)','Besjeling','Lydmalende ord','Eufemisme'],
+    correct:0, explain:'<b>Gjentakelse/anafor</b> hamrer budskapet inn, nesten som et alarmsignal. Det fungerer også som et omkved som binder diktet sammen.'},
+   {type:'mc', q:'Diktet skriver «du må ikke …» i stedet for f.eks. «det kan være lurt å …». Hvilken effekt får det?',
+    options:['Det blir en direkte og kraftig oppfordring (imperativ/appell) – det haster!','Det gjør diktet morsomt.','Det gjør diktet mer høflig.','Det gjør at leseren slapper av.'],
+    correct:0, explain:'Formen er en <b>direkte appell</b>. Diktet beskriver ikke bare – det krever at leseren gjør noe. Det er typisk for <b>kamplyrikk</b>.'},
+   {type:'mc', q:'Diktet stiller det å sitte trygt i sitt eget hjem opp mot fangene som pines i mørket. Hvilket virkemiddel er dette?',
+    options:['Kontrast','Ironi','Allitterasjon','Personifikasjon'],
+    correct:0, explain:'<b>Kontrasten</b> mellom trygghet og lidelse gjør leseren ubekvem: Det er ikke nok å synes synd på «de stakkarene». Medlidenhet uten handling er også en slags søvn.'},
+   {type:'mc', q:'Hvilken appellform er sterkest i diktet?',
+    options:['Patos – appell til følelser (redsel, skyld, medfølelse)','Logos – statistikk og tall','Etos – dikteren skryter av utdannelsen sin','Ingen appellformer'],
+    correct:0, explain:'Diktet spiller på <b>patos</b>: grusomme bilder, rop i mørket, skyld og frykt. Men det har også <b>etos</b>: Øverland var en respektert dikter som tok en risiko ved å si dette høyt.'},
+   {type:'mc', q:'Les disse linjene (fra din egen tekst): «Du må ikke tåle så inderlig vel / den urett som ikke rammer deg selv!» Hva betyr de?',
+    options:['Du må ikke godta urett bare fordi det ikke er du som blir rammet.','Du må være tålmodig og vente.','Du må passe på deg selv først.','Urett er ikke så farlig.'],
+    correct:0, explain:'Dette er diktets mest kjente linjer – og selve <b>kjernen i budskapet</b>: Vi har et moralsk ansvar for andre, ikke bare for oss selv. Linjene siteres fortsatt ofte i debatter i dag.'},
+   {type:'mc', q:'Diktet har rim og fast rytme. Hvorfor passer det godt for et dikt som skal advare folk?',
+    options:['Det er lett å huske, lese høyt og spre – budskapet når mange.','Fordi rim var påbudt ved lov.','Fordi Øverland var modernist og hatet fri form.','Det har ingen betydning.'],
+    correct:0, explain:'Kamplyrikken brukte ofte <b>tradisjonell form</b> med rim og rytme. Budskapet skulle nå bredt ut og være lett å huske og lese høyt – ikke være eksperimentelt og vanskelig.'}
+  ],
+  fact:'Kamplyrikk var dikt som skulle advare mot det som skjedde i Europa, særlig i Tyskland, kritisere myndighetene for ikke å handle og oppmuntre til motstand. Formålet styrte formen.'
+ },
+ {
+  id:'europa', icon:'🗺️', title:'BRETT 4: EUROPA 1936', short:'Europa 1936', scene:'march',
+  intro:`Du går ut i Europa på 1930-tallet. Det marsjeres i gatene, og radioen sender taler.<br><br><b>Oppdrag:</b> Plasser diktet i <b>kulturhistorisk sammenheng</b>. Hva skjedde rundt diktet – og hvordan passer det inn?`,
+  tasks:[
+   {type:'order', q:'Sett hendelsene i riktig rekkefølge (klikk dem i rekkefølge, eldst først).',
+    items:[
+     {t:'Første verdenskrig',y:'1914–1918'},
+     {t:'Hitler og nazistene får makten i Tyskland',y:'1933'},
+     {t:'OL i Berlin – nazistene viser fram «det nye Tyskland»',y:'1936'},
+     {t:'Øverland skriver «Du må ikke sove»',y:'1936–37'},
+     {t:'Norge blir okkupert av Tyskland',y:'9. april 1940'},
+     {t:'Tyskland kapitulerer – Norge blir fritt',y:'8. mai 1945'}
+    ],
+    explain:'Diktet kom <b>før</b> krigen. Det var en advarsel: Øverland så hva nazismen førte til, mens mange i Norge ennå trodde at det ikke angikk dem.'},
+   {type:'mc', q:'Diktet nevner Hitler og «den ariske rasen». Hva viser det til?',
+    options:['Nazistenes raseideologi: ideen om at «arierne» var overlegne, og at jøder, romfolk og andre var «mindreverdige».',
+             'En idrettskonkurranse i Tyskland.',
+             'En kjent tysk roman.',
+             'Et norsk politisk parti.'],
+    correct:0, explain:'Nazistene mente at den «ariske rasen» skulle ta tilbake sin «naturlige lederplass». Andre grupper ble stemplet som «undermennesker». Diktet viser at soldatene ofres for denne løgnen.'},
+   {type:'mc', q:'Hvorfor var Tyskland i krise i mellomkrigstiden, slik at nazistene kunne få makten?',
+    options:['Landet hadde tapt første verdenskrig og led store økonomiske, menneskelige og ideologiske tap.',
+             'Landet hadde vunnet for mange kriger.',
+             'Det var for mange diktere i Tyskland.',
+             'Tyskland hadde for mye olje.'],
+    correct:0, explain:'Etter tapet i første verdenskrig var Tyskland i dyp krise. Hitler utnyttet dette med <b>propaganda, karismatiske taler og økonomisk satsing</b> – og ga mange en ny (falsk) framtidstro.'},
+   {type:'mc', q:'«Du må ikke sove» regnes som kamplyrikk. Hvilket formål hadde kamplyrikken før krigen?',
+    options:['Advare mot utviklingen i Europa, kritisere at myndighetene ikke handlet, og oppmuntre til motstand.',
+             'Underholde folk med morsomme historier.',
+             'Hylle krigshelter etter frigjøringen.',
+             'Beskrive naturen så vakkert som mulig.'],
+    correct:0, explain:'Kamplyrikken var <b>politisk og engasjert</b>. Dikteren så på seg selv som en vekker – en som har plikt til å si fra. Det er et viktig poeng om <b>synet på dikteren</b> i perioden.'},
+   {type:'mc', q:'Hva skjedde med Arnulf Øverland selv under krigen?',
+    options:['Han ble arrestert av nazistene og satt i fangenskap, blant annet i konsentrasjonsleiren Sachsenhausen, til krigen var slutt.',
+             'Han flyktet til USA og skrev filmmanus.',
+             'Han ble nazistenes kulturminister.',
+             'Han sluttet å skrive dikt.'],
+    correct:0, explain:'Øverland ble selv en av «fangene» han hadde skrevet om. Under krigen skrev han også «Våre menn», som hyllet motstandsfolk som satt fengslet i Møllergata 19.'}
+  ],
+  fact:'Diktet ble lest som nesten profetisk: Bare få år senere brøt andre verdenskrig ut (1939), og Europa «brant» bokstavelig talt.'
+ },
+ {
+  id:'gry', icon:'🔥', title:'BRETT 5: MORGENGRY', short:'Morgengry', scene:'dawn',
+  intro:`Natten er over. Himmelen i øst er rød som blod og brann.<br><br><b>Siste oppdrag:</b> Vis at du forstår hvordan diktet passer inn i temaet <b>krig og uro</b> – og hva det kan si oss i dag.`,
+  tasks:[
+   {type:'mc', q:'Hvilket tema er det aller viktigste i diktet?',
+    options:['Likegyldighet og ansvar – vi må ikke lukke øynene for urett som rammer andre.',
+             'Kjærlighet mellom to unge mennesker.',
+             'Naturens skjønnhet om natten.',
+             'Hvordan man blir rik.'],
+    correct:0, explain:'Krig og nazisme er <b>bakgrunnen</b>, men <b>temaet</b> er menneskets ansvar. Derfor er diktet fortsatt aktuelt – det kan leses inn i nye situasjoner.'},
+   {type:'mc', q:'Nordahl Grieg skrev «Til ungdommen» i 1936. Hva har det diktet til felles med «Du må ikke sove»?',
+    options:['Begge er skrevet før krigen og oppfordrer folk til å stå imot nazismen og krigen.',
+             'Begge er skrevet etter frigjøringen i 1945.',
+             'Begge hyller Hitler.',
+             'Begge er nullpunktslyrikk uten rim.'],
+    correct:0, explain:'Begge er <b>kamplyrikk fra 1930-tallet</b>. Grieg mente kampen kunne vinnes med ånd, varme og forsoning. Øverland er mørkere og mer alarmerende: Han roper at tiden er i ferd med å renne ut.'},
+   {type:'mc', q:'Hvordan skiller «Du må ikke sove» seg fra situasjonsdiktene som ble skrevet UNDER krigen (f.eks. «Våre menn» og Hagerups «Aust-Vågøy»)?',
+    options:['Det advarer om noe som kommer, mens situasjonsdiktene kommenterer konkrete hendelser i det okkuperte Norge og skal skape samhold.',
+             'Det er skrevet på nynorsk.',
+             'Det handler om første verdenskrig.',
+             'Det har ingen politisk budskap.'],
+    correct:0, explain:'<b>Før krigen:</b> kamplyrikk som advarer. <b>Under krigen:</b> situasjonsdikt som trøster, samler og gir mot. <b>Etter krigen:</b> oppgjør og nullpunktslyrikk. «Du må ikke sove» er et typisk dikt fra den første fasen.'},
+   {type:'mc', q:'Er «Du må ikke sove» et TYPISK dikt for perioden?',
+    options:['Ja – det er engasjert kamplyrikk med tradisjonell form, et tydelig budskap og et klart formål, slik mye lyrikk var på 1930-tallet.',
+             'Nei – det er et eksperimentelt modernistisk dikt uten budskap.',
+             'Nei – dikt på 1930-tallet handlet bare om natur.',
+             'Ja – fordi alle dikt på 1930-tallet hyllet krigen.'],
+    correct:0, explain:'Å vurdere om en tekst er <b>typisk for perioden</b> er en sentral del av en kulturhistorisk plassering. Diktet er typisk i form og formål – men uvanlig kraftfullt og konkret i advarselen sin.'},
+   {type:'write', q:'STEMMEN SPØR DEG: Plasser diktet i kulturhistorisk sammenheng.',
+    hint:'Skriv 4–6 setninger. Bruk gjerne stikkordene: <b>forfatter · tid/periode · samfunn og historie · sjanger (kamplyrikk) · virkemidler · tema · verdier</b>. Hvordan passer diktet inn i temaet krig og uro?',
+    min:120},
+   {type:'write', q:'STEMMEN SPØR DEG: Hva kan «Du må ikke sove» bety i dag?',
+    hint:'Skriv 3–5 setninger. Finnes det «fanger i kjelleren» i vår egen samtid – urett vi lett lukker øynene for? Hva betyr det å være «våken» i 2026?',
+    min:80}
+  ],
+  fact:'Etter krigen kom et oppgjør – også i litteraturen. Mens noen diktere hadde advart, støttet andre nazismen, som Knut Hamsun. Øverland ble stående som en av dem som «holdt seg våken».'
+ }
+];
+
+/* ---------- STATE ---------- */
+const MAX_LAMPS = 5;
+let S = loadState() || {name:'', unlocked:0, done:[], score:0, lamps:MAX_LAMPS, writes:{}};
+let cur = {lvl:null, task:0, tries:0};
+let muted = false;
+
+function saveState(){ try{ localStorage.setItem('dmis_state', JSON.stringify(S)); }catch(e){} }
+function loadState(){ try{ return JSON.parse(localStorage.getItem('dmis_state')); }catch(e){ return null; } }
+
+/* ---------- SOUND (chiptune) ---------- */
+let AC=null;
+function beep(freq=440,dur=0.08,type='square',vol=0.06,when=0){
+  if(muted) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=vol;
+    o.connect(g); g.connect(AC.destination);
+    const t=AC.currentTime+when;
+    o.start(t); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.stop(t+dur+0.02);
+  }catch(e){}
+}
+const sfx = {
+  ok(){ beep(660,.07); beep(880,.07,'square',.06,.07); beep(1320,.12,'square',.05,.14); },
+  bad(){ beep(220,.15,'sawtooth',.05); beep(150,.25,'sawtooth',.05,.15); },
+  click(){ beep(520,.03,'square',.03); },
+  win(){ [523,659,784,1047,784,1047].forEach((f,i)=>beep(f,.12,'square',.05,i*.11)); },
+  sleep(){ [400,330,260,200].forEach((f,i)=>beep(f,.25,'triangle',.06,i*.22)); }
+};
+document.getElementById('muteBtn').onclick=()=>{ muted=!muted; document.getElementById('muteBtn').textContent = muted?'♪ AV':'♪ PÅ'; };
+
+/* ---------- HUD ---------- */
+function hud(){
+  const l=document.getElementById('lamps'); l.innerHTML='';
+  for(let i=0;i<MAX_LAMPS;i++){ const s=document.createElement('span'); if(i>=S.lamps) s.className='off'; l.appendChild(s); }
+  document.getElementById('hudScore').textContent='POENG '+S.score;
+  document.getElementById('hudTitle').textContent = cur.lvl!==null ? LEVELS[cur.lvl].short.toUpperCase() : 'DU MÅ IKKE SOVE';
+}
+function zzz(){
+  const z=document.createElement('div'); z.className='zzz'; z.textContent='Z z z';
+  z.style.left=(window.innerWidth/2-50)+'px'; z.style.top=(window.innerHeight/2)+'px';
+  document.body.appendChild(z); setTimeout(()=>z.remove(),1300);
+}
+
+/* ---------- PIXEL SCENES ---------- */
+const cv=document.getElementById('scene'), cx=cv.getContext('2d');
+let sceneType='title', frame=0;
+const rnd=(s=>()=> (s=(s*9301+49297)%233280)/233280)(7);
+const STARS=Array.from({length:60},()=>({x:Math.floor(rnd()*320),y:Math.floor(rnd()*70),p:rnd()*6}));
+function px(x,y,w,h,c){ cx.fillStyle=c; cx.fillRect(Math.round(x),Math.round(y),w,h); }
+
+function drawStars(alpha=1){
+  STARS.forEach(s=>{ if(Math.sin(frame/12+s.p)>-0.3*alpha){ px(s.x,s.y,1,1, s.p>4?'#ffd23f':'#ffffff'); } });
+}
+function drawHouse(x,y,lit){
+  px(x,y+10,30,22,'#2a2244'); // wall
+  for(let i=0;i<16;i++) px(x-2+i,y+10-i*0.6,34-i*2,1,'#3d2a55'); // roof-ish
+  px(x+6,y+16,6,6, lit?'#ffd23f':'#111'); px(x+18,y+16,6,6,'#111'); px(x+12,y+24,6,8,'#1a1030');
+}
+function drawPerson(x,y,c='#f4f1de',lying=false){
+  if(lying){ px(x,y,14,3,'#5aa9ff'); px(x-4,y-1,4,4,'#f2c49b'); return; }
+  px(x+2,y,4,4,'#f2c49b'); px(x+1,y+4,6,6,c); px(x+1,y+10,2,4,'#333'); px(x+5,y+10,2,4,'#333');
+}
+function scene(){
+  frame++;
+  const t=sceneType;
+  cx.clearRect(0,0,320,120);
+  if(t==='title'||t==='night'){
+    const g=cx.createLinearGradient(0,0,0,120); g.addColorStop(0,'#05051a'); g.addColorStop(1,'#1c1c48');
+    cx.fillStyle=g; cx.fillRect(0,0,320,120);
+    drawStars();
+    px(260,14,14,14,'#f4f1de'); px(264,14,10,10,'#05051a'); // moon (crescent)
+    px(0,96,320,24,'#0d1a10');
+    drawHouse(40,64,true); drawHouse(110,68,false); drawHouse(200,66,false);
+    // speech waves from the ground
+    for(let i=0;i<4;i++){ const r=((frame/2+i*14)%56); cx.strokeStyle=`rgba(90,169,255,${1-r/56})`; cx.strokeRect(150-r/2,100-r/4,r,r/2); }
+    if(t==='title'){ cx.fillStyle='#ffd23f'; cx.font='8px "Press Start 2P", monospace'; if(Math.floor(frame/30)%2) cx.fillText('Z z z',58,58); }
+  }
+  else if(t==='cellar'){
+    px(0,0,320,120,'#120c08');
+    for(let y=0;y<120;y+=8) for(let x=(y/8)%2?0:8;x<320;x+=16) px(x,y,15,7,'#22180f');
+    // window with bars
+    px(140,10,40,24,'#1c1c48'); drawStarsClip();
+    for(let i=0;i<5;i++) px(143+i*8,10,2,24,'#555');
+    // bars of cells
+    for(let c=0;c<3;c++){ const bx=20+c*100; px(bx,50,70,60,'#0a0705'); for(let i=0;i<8;i++) px(bx+4+i*9,50,3,60,'#6b6b6b');
+       drawPerson(bx+30,92,'#666'); }
+    // flicker lamp
+    const f=Math.random()>.1; px(158,40,4,4,f?'#ffd23f':'#5c4a00');
+    if(f){ cx.fillStyle='rgba(255,210,63,0.06)'; cx.beginPath(); cx.arc(160,42,40,0,7); cx.fill(); }
+  }
+  else if(t==='voice'){
+    px(0,0,320,120,'#0b0b1e'); drawStars(.5);
+    const cxm=160, cym=60;
+    for(let i=0;i<6;i++){ const r=((frame*1.5+i*20)%120); cx.strokeStyle=`rgba(255,210,63,${1-r/120})`; cx.lineWidth=2; cx.strokeRect(cxm-r,cym-r/2,r*2,r); }
+    cx.fillStyle='#f4f1de'; cx.font='10px "Press Start 2P", monospace'; cx.textAlign='center';
+    const w=['DU MÅ','IKKE','SOVE!']; cx.fillText(w[Math.floor(frame/25)%3],cxm,cym+4); cx.textAlign='left';
+  }
+  else if(t==='march'){
+    const g=cx.createLinearGradient(0,0,0,120); g.addColorStop(0,'#2b2b2b'); g.addColorStop(1,'#4a3a2a');
+    cx.fillStyle=g; cx.fillRect(0,0,320,120);
+    // city silhouette
+    [[0,40,30],[30,55,25],[55,30,20],[75,50,40],[115,35,25],[140,60,30],[170,25,22],[192,48,40],[232,38,28],[260,52,30],[290,32,30]]
+      .forEach(([x,h,w])=>px(x,80-h,w,h,'#1a1a1a'));
+    px(0,80,320,40,'#3a3a3a');
+    // marching figures
+    for(let i=0;i<12;i++){ const x=((i*26+frame*0.6)%360)-30; const step=Math.floor(frame/8+i)%2;
+      px(x+2,86,4,4,'#888'); px(x+1,90,6,8,'#4a4a2a'); px(x+1+step,98,2,6,'#222'); px(x+5-step,98,2,6,'#222');
+      if(i%4===0){ px(x+8,72,1,26,'#777'); px(x+9,72,8,6,'#7a1020'); } }
+    // radio speaker on pole
+    px(300,20,3,60,'#555'); px(292,16,18,8,'#777');
+  }
+  else if(t==='dawn'){
+    const g=cx.createLinearGradient(0,0,0,120); g.addColorStop(0,'#1c1c48'); g.addColorStop(.5,'#7a1020'); g.addColorStop(.8,'#ff7a1a'); g.addColorStop(1,'#ffd23f');
+    cx.fillStyle=g; cx.fillRect(0,0,320,120);
+    STARS.slice(0,20).forEach(s=>px(s.x,s.y/3,1,1,'#ffffffaa'));
+    // horizon & fire
+    px(0,92,320,28,'#120808');
+    for(let i=0;i<40;i++){ const x=i*8, h=6+Math.abs(Math.sin(frame/6+i))*12+(i%3)*3;
+      px(x,92-h,6,h,i%2?'#ff7a1a':'#e63946'); px(x+2,92-h+2,2,h-2,'#ffd23f'); }
+    // smoke
+    for(let i=0;i<10;i++){ const y=(70-(frame/3+i*9)%70); cx.fillStyle='rgba(30,20,20,0.5)'; cx.fillRect(20+i*30+Math.sin(frame/20+i)*4,y,10,6); }
+    drawPerson(150,96,'#f4f1de');
+  }
+  else if(t==='win'){
+    const g=cx.createLinearGradient(0,0,0,120); g.addColorStop(0,'#5aa9ff'); g.addColorStop(1,'#ffd23f');
+    cx.fillStyle=g; cx.fillRect(0,0,320,120);
+    px(0,96,320,24,'#2d6a3e');
+    for(let i=0;i<8;i++){ const a=frame/40+i*Math.PI/4; px(160+Math.cos(a)*30,40+Math.sin(a)*30,3,3,'#fff'); }
+    px(150,30,20,20,'#ffd23f');
+    drawPerson(156,82,'#e63946');
+  }
+  else if(t==='sleep'){
+    px(0,0,320,120,'#05051a'); drawStars(.3);
+    drawPerson(150,90,'#5aa9ff',true);
+    cx.fillStyle='#5aa9ff'; cx.font='10px "Press Start 2P", monospace';
+    const k=Math.floor(frame/20)%4; cx.fillText('Z'.repeat(k+1),160,70-k*6);
+  }
+  requestAnimationFrame(scene);
+}
+function drawStarsClip(){ STARS.slice(0,6).forEach((s,i)=>px(144+(i*6)%34,12+(i*5)%18,1,1,'#fff')); }
+requestAnimationFrame(scene);
+
+/* ---------- UTIL ---------- */
+const $=s=>document.querySelector(s);
+const screen=document.getElementById('screen');
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function esc(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+let keyHandler=null;
+document.addEventListener('keydown',e=>{ if(keyHandler && !/TEXTAREA|INPUT/.test(document.activeElement.tagName)) keyHandler(e); });
+
+/* ---------- SCREENS ---------- */
+function titleScreen(){
+  cur.lvl=null; sceneType='title'; hud(); keyHandler=null;
+  screen.innerHTML=`
+  <div class="box" style="text-align:center">
+    <h1>DU MÅ IKKE SOVE</h1>
+    <p class="pixel" style="font-size:10px;color:var(--dim)">ET 8-BIT LÆRINGSSPILL OM ARNULF ØVERLANDS DIKT</p>
+    <p>Natten er mørk. En stemme roper til deg fra kjelleren. Klarer du å holde deg våken hele natten – og forstå hva stemmen vil si deg?</p>
+    <p class="small">5 brett · fra natt til morgengry · ha diktet ditt klart ved siden av!</p>
+    <div style="max-width:420px;margin:14px auto;text-align:left">
+      <label class="pixel" style="font-size:10px">SKRIV NAVNET DITT</label>
+      <input type="text" id="nameIn" maxlength="30" value="${esc(S.name)}" placeholder="Navn">
+    </div>
+    <button class="btn" id="startBtn">▶ START</button>
+    ${S.unlocked>0||S.done.length?'<button class="btn ghost" id="resetBtn">↺ NYTT SPILL</button>':''}
+    <p class="small" style="margin-top:16px">Laget av Silja Nordvik</p>
+  </div>`;
+  $('#startBtn').onclick=()=>{ const n=$('#nameIn').value.trim(); if(!n){ $('#nameIn').focus(); $('#nameIn').style.borderColor='var(--red)'; return; }
+     S.name=n; saveState(); sfx.click(); howTo(); };
+  const r=$('#resetBtn'); if(r) r.onclick=()=>{ if(confirm('Starte helt på nytt? Fremgangen din slettes.')){ S={name:S.name,unlocked:0,done:[],score:0,lamps:MAX_LAMPS,writes:{}}; saveState(); titleScreen(); } };
+  $('#nameIn').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#startBtn').click(); });
+}
+
+function howTo(){
+  sceneType='night'; hud();
+  screen.innerHTML=`
+  <div class="box">
+    <h2>SLIK SPILLER DU</h2>
+    <p>🟡 <b>Våkenhetslampene</b> øverst viser hvor våken du er. Svarer du feil, slukner en lampe. Slukner alle, <b>sovner du</b> og må ta brettet på nytt.</p>
+    <p>⭐ Du får <b>poeng</b> for riktige svar – flest poeng hvis du svarer riktig på første forsøk.</p>
+    <p>💡 Etter hvert svar får du en <b>forklaring</b>. Les den – den hjelper deg på de neste brettene!</p>
+    <p>📜 Ha diktet «Du må ikke sove» foran deg. Mange spørsmål blir lettere hvis du leter i teksten.</p>
+    <p>⌨️ Du kan bruke tastene <b>1–4</b> for å svare og <b>Enter</b> for å gå videre.</p>
+    <button class="btn" id="go">TIL KARTET ▶</button>
+  </div>`;
+  $('#go').onclick=()=>{ sfx.click(); mapScreen(); };
+  keyHandler=e=>{ if(e.key==='Enter') $('#go').click(); };
+}
+
+function mapScreen(){
+  cur.lvl=null; sceneType='night'; hud();
+  const pct=Math.round(S.done.length/LEVELS.length*100);
+  screen.innerHTML=`
+  <div class="box">
+    <h2>NATTENS KART</h2>
+    <p>Hei, <b>${esc(S.name)}</b>! Velg neste brett. Du må fullføre brettene i rekkefølge – fra natten til morgengry.</p>
+    <div class="map">
+      ${LEVELS.map((L,i)=>{
+        const done=S.done.includes(L.id), locked=i>S.unlocked, curr=i===S.unlocked&&!done;
+        return `<button class="node ${done?'done':''} ${locked?'locked':''} ${curr?'cur':''}" data-i="${i}" ${locked?'disabled':''}>
+          <div class="ico">${locked?'🔒':L.icon}</div><span class="pixel">${i+1}. ${L.short.toUpperCase()}</span>
+          <span class="small">${done?'✔ Fullført':locked?'Låst':'Spill!'}</span></button>`;}).join('')}
+    </div>
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <p class="small" style="margin-top:6px">${pct}% av natten er overlevd</p>
+    ${S.done.length===LEVELS.length?'<button class="btn" id="cert">🏆 SE DIPLOMET DITT</button>':''}
+    <button class="btn ghost" id="home">↺ TITTEL</button>
+  </div>`;
+  screen.querySelectorAll('.node:not(.locked)').forEach(b=>b.onclick=()=>{ sfx.click(); levelIntro(+b.dataset.i); });
+  $('#home').onclick=titleScreen;
+  const c=$('#cert'); if(c) c.onclick=finale;
+  keyHandler=e=>{ if(e.key==='Enter'){ const n=Math.min(S.unlocked,LEVELS.length-1); levelIntro(n); } };
+}
+
+function levelIntro(i){
+  cur={lvl:i,task:0,tries:0}; S.lamps=MAX_LAMPS; saveState();
+  const L=LEVELS[i]; sceneType=L.scene; hud();
+  screen.innerHTML=`
+  <div class="box">
+    <span class="tag">${L.tasks.length} OPPGAVER</span>
+    <h2>${L.title}</h2>
+    <p>${L.intro}</p>
+    <button class="btn" id="go">START BRETTET ▶</button>
+    <button class="btn ghost" id="back">◀ KART</button>
+  </div>`;
+  $('#go').onclick=()=>{ sfx.click(); runTask(); };
+  $('#back').onclick=mapScreen;
+  keyHandler=e=>{ if(e.key==='Enter') $('#go').click(); };
+}
+
+function taskHeader(L){
+  const pct=Math.round(cur.task/L.tasks.length*100);
+  return `<span class="tag">${L.title} · OPPGAVE ${cur.task+1}/${L.tasks.length}</span>
+          <div class="progress" style="margin:0 0 12px"><div style="width:${pct}%"></div></div>`;
+}
+
+function runTask(){
+  const L=LEVELS[cur.lvl]; hud();
+  if(cur.task>=L.tasks.length) return levelDone();
+  const T=L.tasks[cur.task]; cur.tries=0;
+  ({mc:taskMC, match:taskMatch, order:taskOrder, write:taskWrite})[T.type](L,T);
+}
+
+function nextBtnHTML(){ return `<button class="btn" id="next">VIDERE ▶</button>`; }
+function wireNext(){ const n=$('#next'); n.onclick=()=>{ sfx.click(); cur.task++; runTask(); }; n.focus(); keyHandler=e=>{ if(e.key==='Enter') n.click(); }; }
+
+function wrong(){
+  S.lamps--; hud(); sfx.bad(); zzz(); saveState();
+  if(S.lamps<=0){ setTimeout(fellAsleep,700); return true; }
+  return false;
+}
+function gain(p){ S.score+=p; hud(); saveState(); }
+
+/* Multiple choice */
+function taskMC(L,T){
+  const order=shuffle(T.options.map((o,i)=>i));
+  screen.innerHTML=`<div class="box">${taskHeader(L)}
+    <h3>${T.q}</h3>
+    <div class="opts">${order.map((oi,k)=>`<button class="opt" data-oi="${oi}"><span class="k">${k+1}</span>${T.options[oi]}</button>`).join('')}</div>
+    <div id="fb"></div></div>`;
+  const btns=[...screen.querySelectorAll('.opt')];
+  const pick=b=>{
+    if(b.disabled) return;
+    const oi=+b.dataset.oi;
+    if(oi===T.correct){
+      b.classList.add('right'); btns.forEach(x=>x.disabled=true); sfx.ok();
+      const pts=cur.tries===0?100:cur.tries===1?50:25; gain(pts);
+      $('#fb').innerHTML=`<div class="feedback ok"><b>✔ RIKTIG! +${pts}</b><br>${T.explain}</div>${nextBtnHTML()}`; wireNext();
+    } else {
+      b.classList.add('wrong'); b.disabled=true; cur.tries++;
+      if(wrong()) return;
+      $('#fb').innerHTML=`<div class="feedback bad"><b>✘ Ikke helt…</b> Du blir litt trøtt. Prøv igjen – se i diktet!</div>`;
+    }
+  };
+  btns.forEach(b=>b.onclick=()=>pick(b));
+  keyHandler=e=>{ const n=parseInt(e.key); if(n>=1&&n<=btns.length) pick(btns[n-1]); };
+}
+
+/* Matching */
+function taskMatch(L,T){
+  const left=shuffle(T.pairs.map((p,i)=>i)), right=shuffle(T.pairs.map((p,i)=>i));
+  screen.innerHTML=`<div class="box">${taskHeader(L)}
+    <h3>${T.q}</h3>
+    <p class="small">Klikk et bilde til venstre, og deretter riktig betydning til høyre.</p>
+    <div class="match">
+      <div class="col">${left.map(i=>`<button class="chip L" data-i="${i}">${T.pairs[i][0]}</button>`).join('')}</div>
+      <div class="col">${right.map(i=>`<button class="chip R" data-i="${i}">${T.pairs[i][1]}</button>`).join('')}</div>
+    </div><div id="fb"></div></div>`;
+  let sel=null, matched=0, errors=0; keyHandler=null;
+  screen.querySelectorAll('.chip.L').forEach(b=>b.onclick=()=>{
+    if(b.classList.contains('done')) return; sfx.click();
+    screen.querySelectorAll('.chip.L').forEach(x=>x.classList.remove('sel')); b.classList.add('sel'); sel=b; });
+  screen.querySelectorAll('.chip.R').forEach(b=>b.onclick=()=>{
+    if(!sel||b.classList.contains('done')) return;
+    if(sel.dataset.i===b.dataset.i){
+      sel.classList.remove('sel'); sel.classList.add('done'); b.classList.add('done'); sel.disabled=b.disabled=true; sel=null; matched++;
+      beep(700+matched*80,.08); gain(30);
+      if(matched===T.pairs.length){ sfx.ok(); const bonus=errors===0?60:0; if(bonus) gain(bonus);
+        $('#fb').innerHTML=`<div class="feedback ok"><b>✔ ALLE KOBLET!${bonus?' Feilfritt: +'+bonus:''}</b><br>${T.explain}</div>${nextBtnHTML()}`; wireNext(); }
+    } else {
+      errors++; b.classList.add('shake'); setTimeout(()=>b.classList.remove('shake'),300);
+      if(wrong()) return;
+      $('#fb').innerHTML=`<div class="feedback bad">✘ Det passer ikke helt. Tenk: Hva <i>står</i> bildet for i diktet?</div>`;
+    }
+  });
+}
+
+/* Ordering (timeline) */
+function taskOrder(L,T){
+  const pool=shuffle(T.items.map((x,i)=>i)); let placed=[];
+  function render(){
+    screen.innerHTML=`<div class="box">${taskHeader(L)}
+      <h3>${T.q}</h3>
+      <div class="order-list">${T.items.map((_,k)=>`<div class="slot"><span class="n">${k+1}</span>${placed[k]!==undefined?`<span>${T.items[placed[k]].t} <span class="small">(${T.items[placed[k]].y})</span></span>`:'<span class="small">…</span>'}</div>`).join('')}</div>
+      <p class="small" style="margin-top:12px">Velg neste hendelse:</p>
+      <div class="opts">${pool.filter(i=>!placed.includes(i)).map(i=>`<button class="opt" data-i="${i}">${T.items[i].t}</button>`).join('')}</div>
+      <div id="fb"></div></div>`;
+    screen.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+      const i=+b.dataset.i;
+      if(i===placed.length){ placed.push(i); sfx.click(); gain(20);
+        if(placed.length===T.items.length){ render(); sfx.ok(); screen.querySelectorAll('.opts').forEach(o=>o.remove());
+          $('#fb').innerHTML=`<div class="feedback ok"><b>✔ TIDSLINJEN ER RIKTIG!</b><br>${T.explain}</div>${nextBtnHTML()}`; wireNext(); }
+        else render();
+      } else { b.classList.add('wrong'); if(wrong()) return;
+        $('#fb').innerHTML=`<div class="feedback bad">✘ Ikke den – hva skjedde <b>før</b>?</div>`; }
+    });
+  }
+  keyHandler=null; render();
+}
+
+/* Writing */
+function taskWrite(L,T){
+  const key=L.id+'_'+cur.task;
+  screen.innerHTML=`<div class="box">${taskHeader(L)}
+    <h3>${T.q}</h3><p>${T.hint}</p>
+    <textarea id="wr" placeholder="Skriv her …">${esc(S.writes[key]||'')}</textarea>
+    <p class="small" id="cnt"></p>
+    <button class="btn" id="send" disabled>SEND SVARET ▶</button><div id="fb"></div></div>`;
+  const ta=$('#wr'), cnt=$('#cnt'), send=$('#send');
+  const upd=()=>{ const n=ta.value.trim().length; cnt.textContent=n<T.min?`${n}/${T.min} tegn – skriv litt til for å holde deg våken …`:`${n} tegn – klar!`; send.disabled=n<T.min; S.writes[key]=ta.value; saveState(); };
+  ta.oninput=upd; upd(); ta.focus(); keyHandler=null;
+  send.onclick=()=>{ sfx.ok(); gain(150); ta.readOnly=true; send.remove();
+    $('#fb').innerHTML=`<div class="feedback ok"><b>✔ STEMMEN HAR HØRT DEG. +150</b><br>Svaret ditt er lagret og kommer med på diplomet. Læreren din kan se det der.</div>${nextBtnHTML()}`; wireNext(); };
+}
+
+function levelDone(){
+  const L=LEVELS[cur.lvl];
+  if(!S.done.includes(L.id)) S.done.push(L.id);
+  S.unlocked=Math.max(S.unlocked,Math.min(cur.lvl+1,LEVELS.length-1));
+  const bonus=S.lamps*20; S.score+=bonus; saveState(); hud(); sfx.win();
+  sceneType = cur.lvl===LEVELS.length-1 ? 'win' : L.scene;
+  const last = cur.lvl===LEVELS.length-1;
+  screen.innerHTML=`<div class="box">
+    <h2>★ ${L.title} FULLFØRT ★</h2>
+    <p>Du holdt deg våken! Lamper igjen: <b>${S.lamps}</b> → bonus <b>+${bonus}</b> poeng.</p>
+    <div class="fact"><b>VISSTE DU?</b><br>${L.fact}</div>
+    ${last?'<button class="btn" id="go">🏆 TIL DIPLOMET</button>':'<button class="btn" id="go">NESTE BRETT ▶</button>'}
+    <button class="btn ghost" id="map">KART</button></div>`;
+  $('#go').onclick=()=>{ sfx.click(); last?finale():levelIntro(cur.lvl+1); };
+  $('#map').onclick=mapScreen;
+  keyHandler=e=>{ if(e.key==='Enter') $('#go').click(); };
+}
+
+function fellAsleep(){
+  sceneType='sleep'; sfx.sleep(); hud();
+  screen.innerHTML=`<div class="box" style="text-align:center">
+    <h2>DU SOVNET…</h2>
+    <p>Stemmen ropte, men du hørte den ikke. <i>Du må ikke sove!</i></p>
+    <p class="small">Les forklaringene og diktet en gang til, og prøv brettet på nytt.</p>
+    <button class="btn" id="re">↺ PRØV IGJEN</button><button class="btn ghost" id="map">KART</button></div>`;
+  $('#re').onclick=()=>levelIntro(cur.lvl);
+  $('#map').onclick=mapScreen;
+  keyHandler=e=>{ if(e.key==='Enter') $('#re').click(); };
+}
+
+function finale(){
+  cur.lvl=null; sceneType='win'; hud(); keyHandler=null;
+  const w1=S.writes['gry_4']||'', w2=S.writes['gry_5']||'';
+  const rank = S.score>=2600?'VEKKEREN':S.score>=2000?'NATTEVAKTEN':S.score>=1400?'DEN VÅKNE':'SØVNGJENGEREN';
+  const date=new Date().toLocaleDateString('nb-NO');
+  screen.innerHTML=`<div class="box cert">
+    <h1 style="text-align:center">DIPLOM</h1>
+    <p style="text-align:center" class="pixel">${esc(S.name).toUpperCase()}</p>
+    <p style="text-align:center">har holdt seg våken gjennom hele natten i <b>«Du må ikke sove»</b><br>
+    og fått <b>${S.score} poeng</b> · Rang: <b>${rank}</b></p>
+    <hr>
+    <h3 style="color:#7a1020">Dette har jeg lært</h3>
+    <ul>
+      <li>Diktet har en <b>drømmeramme</b>: fra natt til morgengry, der morgenen er rød som blod og brann.</li>
+      <li><b>Søvn</b> er et bilde på likegyldighet. Å <b>våkne</b> er å forstå og ta ansvar.</li>
+      <li>Diktet bruker <b>gjentakelse, direkte tiltale, kontrast og patos</b> for å vekke leseren.</li>
+      <li>Det er <b>kamplyrikk</b> fra 1936–37: en advarsel mot nazismen og krigen, skrevet før krigen kom.</li>
+      <li>Hovedtemaet er <b>ansvar for andre</b> – vi må ikke godta urett bare fordi den ikke rammer oss selv.</li>
+    </ul>
+    <h3 style="color:#7a1020">Min kulturhistoriske plassering</h3>
+    <p style="white-space:pre-wrap">${esc(w1)||'<i>(ikke skrevet)</i>'}</p>
+    <h3 style="color:#7a1020">Hva diktet betyr i dag</h3>
+    <p style="white-space:pre-wrap">${esc(w2)||'<i>(ikke skrevet)</i>'}</p>
+    <hr>
+    <p class="small">${date} · Norsk vg3 · Krig og uro 1930–1950 · Spillet er laget av Silja Nordvik</p>
+  </div>
+  <div class="noprint" style="margin-top:12px">
+    <button class="btn" id="print">🖨 SKRIV UT / LAGRE SOM PDF</button>
+    <button class="btn ghost" id="copy">📋 KOPIER TEKSTENE MINE</button>
+    <button class="btn ghost" id="map">KART</button>
+  </div>`;
+  $('#print').onclick=()=>window.print();
+  $('#copy').onclick=()=>{ const txt=`${S.name} – «Du må ikke sove»\n\nKulturhistorisk plassering:\n${w1}\n\nHva diktet betyr i dag:\n${w2}`;
+    (navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>{ $('#copy').textContent='✔ KOPIERT'; }).catch(()=>{ prompt('Kopier teksten:',txt); }); };
+  $('#map').onclick=mapScreen;
+}
+
+titleScreen();
+</script>
+</body>
+</html>

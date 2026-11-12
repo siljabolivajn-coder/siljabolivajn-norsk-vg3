@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storrommet: Sammenlign tekstene</title>
+<style>
+  :root{
+    --bg:#0f1729; --panel:#182238; --panel2:#1f2c48; --gold:#d4af6a;
+    --text:#eef1f7; --muted:#9aa7c2; --good:#5fbf7f; --bad:#e3667a; --accent:#5b8def;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:radial-gradient(circle at top, #1a2440, #0a0f1e 70%);
+    font-family:'Georgia', 'Times New Roman', serif; color:var(--text); padding:24px;
+  }
+  .wrap{max-width:880px; margin:0 auto;}
+  header{text-align:center; margin-bottom:24px;}
+  header h1{font-size:1.9rem; margin:0 0 6px; letter-spacing:.5px;}
+  header p{color:var(--muted); margin:0; font-size:.95rem;}
+  .badge-row{display:flex; justify-content:center; gap:8px; margin-top:14px; flex-wrap:wrap;}
+  .badge{background:var(--panel2); border:1px solid #33456d; padding:6px 12px; border-radius:20px; font-size:.76rem; color:var(--muted);}
+  .badge.active{border-color:var(--gold); color:var(--gold);}
+  .card{
+    background:var(--panel); border:1px solid #29365a; border-radius:14px; padding:28px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); margin-bottom:18px;
+  }
+  h2{color:var(--gold); font-size:1.3rem; margin-top:0;}
+  h3{color:var(--text); font-size:1.05rem;}
+  p{line-height:1.6;}
+  .lead{color:var(--muted);}
+  .options{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  button{
+    font-family:inherit; cursor:pointer; border:1px solid #3a4a72; background:var(--panel2);
+    color:var(--text); padding:12px 16px; border-radius:10px; font-size:.96rem; text-align:left;
+    transition:.15s;
+  }
+  button:hover:not(:disabled){border-color:var(--accent); background:#243357;}
+  button:disabled{cursor:default; opacity:.55;}
+  .opt-correct{border-color:var(--good) !important; background:#173324 !important;}
+  .opt-wrong{border-color:var(--bad) !important; background:#3a1c24 !important;}
+  .opt-picked{border-color:var(--accent) !important;}
+  .primary{ background:var(--gold); color:#20200a; border:none; font-weight:bold; text-align:center; }
+  .primary:hover:not(:disabled){background:#e8c785;}
+  .primary:disabled{opacity:.4;}
+  .ghost{background:transparent; border:1px solid #3a4a72; text-align:center;}
+  .feedback{margin-top:14px; padding:14px; border-radius:10px; font-size:.92rem; line-height:1.5;}
+  .feedback.good{background:#12301f; border:1px solid var(--good); color:#c9f2d6;}
+  .feedback.bad{background:#301419; border:1px solid var(--bad); color:#f6cdd4;}
+  .cats{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;}
+  @media (max-width:560px){.cats{grid-template-columns:1fr;}}
+  .evidence-box{background:#101a30; border:1px dashed #33456d; padding:16px; border-radius:10px; font-style:italic; margin-bottom:6px;}
+  .footer-nav{display:flex; justify-content:space-between; margin-top:20px; gap:10px; flex-wrap:wrap;}
+  .score-line{font-size:.88rem; color:var(--muted); margin-top:10px;}
+  .factbox{background:#101a30; border:1px solid #33456d; border-radius:10px; padding:16px; margin-top:14px; font-size:.88rem;}
+  .factbox h4{margin:0 0 6px; color:var(--gold); font-size:.92rem;}
+  textarea, select{
+    width:100%; background:#101a30; border:1px solid #33456d; border-radius:10px;
+    color:var(--text); font-family:inherit; padding:12px; font-size:.95rem;
+  }
+  textarea{min-height:130px; resize:vertical;}
+  ul{line-height:1.7;}
+  .progress{height:6px; background:#101a30; border-radius:4px; overflow:hidden; margin-top:14px;}
+  .progress-fill{height:100%; background:var(--gold); transition:width .3s;}
+  .center{text-align:center;}
+  .final-score{font-size:2.4rem; color:var(--gold); font-weight:bold; text-align:center; margin:6px 0;}
+  .timeline-track{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  .timeline-slot{
+    background:#101a30; border:2px dashed #33456d; border-radius:10px; padding:14px 16px;
+    min-height:52px; display:flex; align-items:center; font-size:.9rem; color:var(--muted);
+  }
+  .timeline-slot.filled{border-style:solid; color:var(--text); border-color:var(--accent);}
+  .timeline-pool{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;}
+  .chip{
+    background:var(--panel2); border:1px solid #3a4a72; border-radius:20px; padding:8px 14px;
+    font-size:.88rem; cursor:pointer; transition:.15s;
+  }
+  .chip:hover{border-color:var(--accent);}
+  .chip.used{opacity:.3; cursor:default; pointer-events:none;}
+  .pairbox{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0;}
+  @media (max-width:560px){.pairbox{grid-template-columns:1fr;}}
+  .pairbox .text-tag{
+    background:#101a30; border:1px solid #33456d; border-radius:10px; padding:12px; font-size:.85rem; text-align:center;
+  }
+  .text-tag b{color:var(--gold); display:block; margin-bottom:2px;}
+  .grid-summary{display:grid; grid-template-columns:1fr; gap:10px; margin-top:10px;}
+  .sumcard{background:#101a30; border:1px solid #33456d; border-radius:10px; padding:14px;}
+  .sumcard b{color:var(--gold);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>📚 Storrommet: Sammenlign tekstene</h1>
+    <p>Fem tekster fra og om den realistiske tradisjonen — sett dem opp mot hverandre</p>
+    <div class="badge-row" id="badgeRow"></div>
+  </header>
+  <div id="app"></div>
+</div>
+
+<script>
+// ============ DATA: TEKSTENE ============
+const texts = {
+  amtmannen: {
+    name: "Amtmannens døtre",
+    author: "Camilla Collett",
+    year: "1854–55",
+    period: "Poetisk realisme",
+    short: "Sofie forelsker seg i huslæreren Georg Kold, men samfunnets forventninger fører til at hun i stedet gifter seg med den eldre prosten Rein — som søstrene før henne."
+  },
+  gjengangere: {
+    name: "Gjengangere",
+    author: "Henrik Ibsen",
+    year: "1881",
+    period: "Kritisk realisme",
+    short: "Fru Alvings pene fasade sprekker: kammerherre Alvings utsvevende liv, Regines egentlige opphav og Osvalds arvede sykdom avsløres — kirken og borgerskapets dobbeltmoral rives ned."
+  },
+  albertine: {
+    name: "Albertine",
+    author: "Christian Krohg",
+    year: "1886",
+    period: "Kritisk realisme / Naturalisme",
+    short: "Den fattige syersken Albertine voldtas av politifullmektig Winther og ender selv registrert som prostituert — mens han går fri."
+  },
+  kunsten: {
+    name: "Kunsten å myrde",
+    author: "Cora Sandel",
+    year: "1935",
+    period: "Etisk realisme",
+    short: "En stille samtale mellom jeg-fortelleren og hushjelpen Francine avslører at kusinen Germaine tok sitt eget liv etter å ha blitt gravid utenfor ekteskap."
+  },
+  jantelov: {
+    name: "En asylsøkers jantelov",
+    author: "Sumaya Jirde Ali",
+    year: "2017",
+    period: "Moderne tekst (sammenlignes med kritisk realisme)",
+    short: "Et lyrisk jeg forteller et lyrisk du hvordan det norske majoritetssamfunnet ser på og møter asylsøkere gjennom uskrevne regler og fordommer."
+  }
+};
+
+// ============ ROUND 1: TIDSLINJE ============
+const timelineOrder = ["amtmannen","gjengangere","albertine","kunsten","jantelov"];
+
+// ============ ROUND 2: PERIODE-MATCH ============
+const periodQuestions = [
+  { key:"amtmannen", options:["Poetisk realisme","Kritisk realisme","Naturalisme","Etisk realisme","Moderne tekst"], correct:0,
+    explain:"Amtmannens døtre (1854–55) er en overgangsroman i poetisk realisme: romantisk i stil, men banebrytende samfunnskritisk i tema." },
+  { key:"gjengangere", options:["Poetisk realisme","Kritisk realisme","Naturalisme","Etisk realisme","Moderne tekst"], correct:1,
+    explain:"Gjengangere (1881) er kritisk realisme: en direkte kritikk av kirken og borgerskapets dobbeltmoral." },
+  { key:"albertine", options:["Poetisk realisme","Kritisk realisme","Naturalisme","Etisk realisme","Moderne tekst"], correct:2,
+    explain:"Albertine (1886) ligger i skjæringspunktet mellom kritisk realisme og naturalisme, men regnes oftest til naturalismen pga. undergangslogikken." },
+  { key:"kunsten", options:["Poetisk realisme","Kritisk realisme","Naturalisme","Etisk realisme","Moderne tekst"], correct:3,
+    explain:"Kunsten å myrde (1935) er etisk realisme: et etisk dilemma, dypt blikk på sjeleliv, og en antydende, underspilt stil." },
+  { key:"jantelov", options:["Poetisk realisme","Kritisk realisme","Naturalisme","Etisk realisme","Moderne tekst"], correct:4,
+    explain:"En asylsøkers jantelov (2017) hører formelt ikke til perioden 1850–1940, men deler kritisk realismes samfunnskritiske blikk." }
+];
+
+// ============ ROUND 3: GJETT TEKSTEN (tema på tvers) ============
+const guessTheText = [
+  { clue: "En representant for loven — som skal beskytte — er selv den som begår overgrepet mot hovedpersonen.", answer:"albertine",
+    explain:"I Albertine er det politifullmektig Winther, en representant for loven, som voldtar Albertine." },
+  { clue: "Hovedpersonen ender opp med å gifte seg med en hun ikke elsker, fordi «vår bestemmelse er å giftes, ikke å bli lykkelige».", answer:"amtmannen",
+    explain:"I Amtmannens døtre gifter Sofie seg med prosten Rein i stedet for Georg Kold, som samfunnet forventer." },
+  { clue: "Familiens skam over en uønsket graviditet fører indirekte til en kvinnes død — uten at noen fysisk gjerningsperson pekes ut.", answer:"kunsten",
+    explain:"I Kunsten å myrde er det familiens fordømmelse, ikke et fysisk mord, som «myrder» Germaine." },
+  { clue: "Et etisk dilemma om plikt versus egen lykke fører til at en kvinne blir tvunget tilbake til et ekteskap hun ville forlate.", answer:"gjengangere",
+    explain:"I Gjengangere tvang Pastor Manders fru Alving tilbake til ekteskapet med kammerherre Alving." },
+  { clue: "Et lyrisk «vi» forteller et lyrisk «du» at hen ikke er klar for samfunnet — når det egentlig er samfunnet som ikke er klart.", answer:"jantelov",
+    explain:"Dette er kiasmen fra En asylsøkers jantelov, som avdekker samfunnets dobbeltmoral mot asylsøkere." }
+];
+
+// ============ ROUND 4: MAKT PÅ TVERS (par-sammenligning) ============
+const powerPairs = [
+  {
+    a:"gjengangere", b:"albertine",
+    q:"I begge disse tekstene er det en autoritet — en institusjon eller person med makt — som egentlig bærer skylden, men som slipper unna. Hvem har makten i hver tekst?",
+    options:[
+      "Gjengangere: Pastor Manders/kirken. Albertine: politifullmektig Winther/politiet.",
+      "Gjengangere: Osvald. Albertine: Albertines mor.",
+      "Gjengangere: Regine. Albertine: Albertines bror Edvard.",
+      "Ingen av tekstene handler om makt."
+    ], correct:0,
+    explain:"I Gjengangere er det kirken (Pastor Manders) som opprettholder en skadelig pliktmoral. I Albertine er det politiet (Winther) som misbruker sin makt og går fri, mens offeret straffes."
+  },
+  {
+    a:"amtmannen", b:"jantelov",
+    q:"Både Amtmannens døtre og En asylsøkers jantelov handler om at en gruppe mennesker må innordne seg regler de ikke har bestemt selv. Hvem lager reglene i hver tekst?",
+    options:[
+      "Familien/samfunnet lager ekteskapsreglene for kvinner. Majoritetssamfunnet («vi») lager de uskrevne reglene for asylsøkere.",
+      "Kirken lager reglene i begge tekstene.",
+      "Hovedpersonene lager sine egne regler i begge tekstene.",
+      "Reglene kommer fra loven i begge tekstene."
+    ], correct:0,
+    explain:"I Amtmannens døtre er det familien og de sosiale normene som bestemmer at kvinner skal gifte seg etter forventning, ikke kjærlighet. I jantelov-diktet er det majoritetssamfunnet («vi») som setter uskrevne regler asylsøkeren aldri kan tilfredsstille fullt ut."
+  },
+  {
+    a:"kunsten", b:"albertine",
+    q:"Begge tekstene handler om kvinner som blir dømt hardt for noe knyttet til seksualitet, mens mennene som er involvert, ikke stilles til samme ansvar. Hva er den viktigste likheten?",
+    options:[
+      "Dobbeltmoral: kvinnen bærer skammen og konsekvensene alene, mannen/samfunnet går fri.",
+      "Begge kvinnene blir hedret av samfunnet til slutt.",
+      "Begge tekstene har en lykkelig slutt for hovedpersonen.",
+      "Det er ingen likhet mellom tekstene."
+    ], correct:0,
+    explain:"Germaine i Kunsten å myrde og Albertine i Albertine blir begge dømt og straffet av samfunnet for noe menn er minst like delaktige i, uten at mennene møter samme fordømmelse — et kjernetrekk ved dobbeltmoralen i den realistiske tradisjonen."
+  }
+];
+
+// ============ STATE ============
+let state = {
+  screen: "start",
+  tlPool: [...timelineOrder].sort(()=>Math.random()-0.5),
+  tlSlots: [null,null,null,null,null],
+  tlChecked: false,
+  pIndex:0, pScore:0, pAnswered:false,
+  gIndex:0, gScore:0, gAnswered:false,
+  mIndex:0, mScore:0, mAnswered:false
+};
+
+const app = document.getElementById("app");
+const badgeRow = document.getElementById("badgeRow");
+
+function updateBadges(){
+  const stages = ["Start","Tidslinjen","Periodene","Gjett teksten","Makt på tvers","Din analyse"];
+  const activeIdx = {
+    start:0, timeline:1,
+    period:2, periodres:2,
+    guess:3, guessres:3,
+    match:4, matchres:4,
+    reflect:5, final:5
+  }[state.screen] ?? 0;
+  badgeRow.innerHTML = stages.map((s,i)=>`<div class="badge ${i===activeIdx?'active':''}">${s}</div>`).join("");
+}
+
+function render(){
+  updateBadges();
+  if(state.screen==="start") return renderStart();
+  if(state.screen==="timeline") return renderTimeline();
+  if(state.screen==="period") return renderPeriod();
+  if(state.screen==="periodres") return renderPeriodResult();
+  if(state.screen==="guess") return renderGuess();
+  if(state.screen==="guessres") return renderGuessResult();
+  if(state.screen==="match") return renderMatch();
+  if(state.screen==="matchres") return renderMatchResult();
+  if(state.screen==="reflect") return renderReflect();
+  if(state.screen==="final") return renderFinal();
+}
+
+// ---------- START ----------
+function renderStart(){
+  const list = timelineOrder.map(k=>texts[k]).sort((a,b)=>parseInt(a.year)-parseInt(b.year));
+  app.innerHTML = `
+    <div class="card">
+      <h2>Storrommet med fem saker</h2>
+      <p>Du har nå etterforsket fem tekster hver for seg. Nå skal du legge dem side ved side og se hva de har til felles — og hvor de skiller seg fra hverandre.</p>
+      <div class="grid-summary">
+        ${Object.values(texts).map(t=>`
+          <div class="sumcard"><b>${t.name}</b> (${t.author}, ${t.year}) — ${t.period}<br><span style="color:var(--muted); font-size:.85rem;">${t.short}</span></div>
+        `).join("")}
+      </div>
+      <p class="lead" style="margin-top:16px;">Du skal gjennom fem runder: <b>Tidslinjen</b>, <b>Periodene</b>, <b>Gjett teksten</b>, <b>Makt på tvers</b>, og til slutt <b>Din analyse</b>.</p>
+      <button class="primary" onclick="state.screen='timeline'; render();">Start sammenligningen →</button>
+    </div>
+  `;
+}
+
+// ---------- ROUND 1: TIDSLINJE ----------
+function renderTimeline(){
+  const allFilled = state.tlSlots.every(s=>s!==null);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Tidslinjen: Hvilken kom først?</h2>
+      <p class="lead">Klikk på tekstene i pop-lista i den rekkefølgen de ble utgitt (eldst → nyest), slik at de fylles inn i sporene nedenfor.</p>
+      <div class="timeline-track" id="tlTrack">
+        ${state.tlSlots.map((slotKey,i)=>`
+          <div class="timeline-slot ${slotKey? 'filled':''}">
+            ${slotKey ? `<b>${i+1}.</b>&nbsp; ${texts[slotKey].name} (${texts[slotKey].year})` : `<b>${i+1}.</b>&nbsp; —`}
+          </div>
+        `).join("")}
+      </div>
+      <div class="timeline-pool" id="tlPoolDiv">
+        ${state.tlPool.map(k=>`<button class="chip ${state.tlSlots.includes(k)?'used':''}" onclick="pickTimeline('${k}')" ${state.tlSlots.includes(k)?'disabled':''}>${texts[k].name}</button>`).join("")}
+      </div>
+      <div id="tlFeedback"></div>
+      <div class="footer-nav">
+        <button class="ghost" onclick="resetTimeline()">Nullstill</button>
+        <button class="primary" id="tlCheck" ${allFilled?'':'disabled'} onclick="checkTimeline()">Sjekk rekkefølgen →</button>
+      </div>
+    </div>
+  `;
+}
+function pickTimeline(key){
+  if(state.tlChecked) return;
+  const idx = state.tlSlots.indexOf(null);
+  if(idx===-1) return;
+  if(state.tlSlots.includes(key)) return;
+  state.tlSlots[idx] = key;
+  render();
+}
+function resetTimeline(){
+  state.tlSlots = [null,null,null,null,null];
+  state.tlChecked = false;
+  render();
+}
+function checkTimeline(){
+  state.tlChecked = true;
+  const correct = state.tlSlots.every((k,i)=>k===timelineOrder[i]);
+  render();
+  const fb = document.getElementById("tlFeedback");
+  fb.innerHTML = `<div class="feedback ${correct?'good':'bad'}">
+    ${correct?'Riktig rekkefølge!':'Ikke helt riktig rekkefølge.'} Den faktiske kronologien er:
+    ${timelineOrder.map(k=>`${texts[k].name} (${texts[k].year})`).join(" → ")}.
+    Legg merke til at «En asylsøkers jantelov» ligger 80 år etter de andre — den er ikke en del av selve realismeperioden (1850–1940), men brukes som en moderne sammenligningstekst.
+    </div>`;
+  const btn = document.getElementById("tlCheck");
+  btn.outerHTML = `<button class="primary" onclick="state.screen='period'; render();">Fortsett til periodene →</button>`;
+}
+
+// ---------- ROUND 2: PERIODE ----------
+function renderPeriod(){
+  const q = periodQuestions[state.pIndex];
+  const t = texts[q.key];
+  const progress = Math.round((state.pIndex/periodQuestions.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Periodene (${state.pIndex+1}/${periodQuestions.length})</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box"><b>${t.name}</b> (${t.author}, ${t.year})<br>${t.short}</div>
+      <p class="lead">Hvilken litterær periode/kategori hører denne teksten til?</p>
+      <div class="options" id="opts">
+        ${q.options.map((o,i)=>`<button onclick="answerPeriod(${i})" id="popt${i}">${o}</button>`).join("")}
+      </div>
+      <div id="pfeedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.pScore}/${periodQuestions.length}</span>
+        <button class="primary" id="pnext" style="display:none" onclick="nextPeriod()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerPeriod(i){
+  if(state.pAnswered) return;
+  state.pAnswered = true;
+  const q = periodQuestions[state.pIndex];
+  document.querySelectorAll("#opts button").forEach((b,idx)=>{
+    b.disabled = true;
+    if(idx===q.correct) b.classList.add("opt-correct");
+    else if(idx===i) b.classList.add("opt-wrong");
+  });
+  const isCorrect = i===q.correct;
+  if(isCorrect) state.pScore++;
+  document.getElementById("pfeedback").innerHTML = `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig! ':'Ikke helt. '}${q.explain}</div>`;
+  document.getElementById("pnext").style.display = "inline-block";
+}
+function nextPeriod(){
+  state.pIndex++;
+  state.pAnswered = false;
+  if(state.pIndex >= periodQuestions.length){ state.screen="periodres"; }
+  render();
+}
+function renderPeriodResult(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Periodene er kartlagt</h2>
+      <div class="final-score">${state.pScore} / ${periodQuestions.length}</div>
+      <p class="lead">Fire av tekstene fordeler seg over hele den realistiske tradisjonen, fra poetisk realisme til etisk realisme — mens jantelov-diktet ligger utenfor perioden, men brukes til å belyse hvordan realismens spørsmål fortsatt er aktuelle.</p>
+      <button class="primary" onclick="state.screen='guess'; render();">Fortsett til «Gjett teksten» →</button>
+    </div>
+  `;
+}
+
+// ---------- ROUND 3: GJETT TEKSTEN ----------
+function renderGuess(){
+  const q = guessTheText[state.gIndex];
+  const progress = Math.round((state.gIndex/guessTheText.length)*100);
+  const allOptions = Object.keys(texts);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Gjett teksten (${state.gIndex+1}/${guessTheText.length})</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box">${q.clue}</div>
+      <p class="lead">Hvilken tekst beskriver dette?</p>
+      <div class="options" id="gopts">
+        ${allOptions.map(k=>`<button onclick="answerGuess('${k}')" data-k="${k}">${texts[k].name}</button>`).join("")}
+      </div>
+      <div id="gfeedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.gScore}/${guessTheText.length}</span>
+        <button class="primary" id="gnext" style="display:none" onclick="nextGuess()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerGuess(chosen){
+  if(state.gAnswered) return;
+  state.gAnswered = true;
+  const q = guessTheText[state.gIndex];
+  document.querySelectorAll("#gopts button").forEach(b=>{
+    b.disabled = true;
+    const k = b.getAttribute("data-k");
+    if(k===q.answer) b.classList.add("opt-correct");
+    else if(k===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===q.answer;
+  if(isCorrect) state.gScore++;
+  document.getElementById("gfeedback").innerHTML = `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig!':'Riktig svar er '+texts[q.answer].name+'.'} ${q.explain}</div>`;
+  document.getElementById("gnext").style.display="inline-block";
+}
+function nextGuess(){
+  state.gIndex++;
+  state.gAnswered = false;
+  if(state.gIndex >= guessTheText.length){ state.screen="guessres"; }
+  render();
+}
+function renderGuessResult(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Sporene stemmer</h2>
+      <div class="final-score">${state.gScore} / ${guessTheText.length}</div>
+      <p class="lead">Legg merke til hvor ofte samme mønster dukker opp: en kvinne dømmes hardt, mens den egentlige maktutøveren (familien, kirken, politiet, samfunnet) går fri.</p>
+      <button class="primary" onclick="state.screen='match'; render();">Fortsett til «Makt på tvers» →</button>
+    </div>
+  `;
+}
+
+// ---------- ROUND 4: MAKT PÅ TVERS ----------
+function renderMatch(){
+  const p = powerPairs[state.mIndex];
+  const progress = Math.round((state.mIndex/powerPairs.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Makt på tvers (${state.mIndex+1}/${powerPairs.length})</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="pairbox">
+        <div class="text-tag"><b>${texts[p.a].name}</b>${texts[p.a].author}, ${texts[p.a].year}</div>
+        <div class="text-tag"><b>${texts[p.b].name}</b>${texts[p.b].author}, ${texts[p.b].year}</div>
+      </div>
+      <p class="lead">${p.q}</p>
+      <div class="options" id="mopts">
+        ${p.options.map((o,i)=>`<button onclick="answerMatch(${i})" id="mopt${i}">${o}</button>`).join("")}
+      </div>
+      <div id="mfeedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.mScore}/${powerPairs.length}</span>
+        <button class="primary" id="mnext" style="display:none" onclick="nextMatch()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerMatch(i){
+  if(state.mAnswered) return;
+  state.mAnswered = true;
+  const p = powerPairs[state.mIndex];
+  document.querySelectorAll("#mopts button").forEach((b,idx)=>{
+    b.disabled = true;
+    if(idx===p.correct) b.classList.add("opt-correct");
+    else if(idx===i) b.classList.add("opt-wrong");
+  });
+  const isCorrect = i===p.correct;
+  if(isCorrect) state.mScore++;
+  document.getElementById("mfeedback").innerHTML = `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig! ':'Ikke helt. '}${p.explain}</div>`;
+  document.getElementById("mnext").style.display="inline-block";
+}
+function nextMatch(){
+  state.mIndex++;
+  state.mAnswered = false;
+  if(state.mIndex >= powerPairs.length){ state.screen="matchres"; }
+  render();
+}
+function renderMatchResult(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Maktmønstrene er avdekket</h2>
+      <div class="final-score">${state.mScore} / ${powerPairs.length}</div>
+      <p class="lead">Makt i disse tekstene sitter ofte hos institusjoner — kirken, politiet, familien, majoritetssamfunnet — som slipper unna ansvar, mens enkeltmennesket bærer konsekvensene.</p>
+      <button class="primary" onclick="state.screen='reflect'; render();">Fortsett til din egen analyse →</button>
+    </div>
+  `;
+}
+
+// ---------- ROUND 5: DIN ANALYSE ----------
+function renderReflect(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Din analyse: Velg to tekster og sammenlign</h2>
+      <p class="lead">Velg to av de fem tekstene og skriv en kort sammenligning (5–8 setninger). Bruk disse spørsmålene som støtte:</p>
+      <ul>
+        <li>Hva er <b>temaet</b> og <b>innholdet</b> i hver av tekstene?</li>
+        <li>Hvilke <b>virkemidler</b> bruker forfatterne (fortellerteknikk, symbolikk, språklige bilder)?</li>
+        <li>Hvordan kommer <b>makt</b> til syne i tekstene?</li>
+        <li>Hvordan skiller synet på <b>samfunn og mennesker</b> seg mellom tekstene, eller ligner de?</li>
+      </ul>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin:14px 0;">
+        <select id="textA">${Object.keys(texts).map(k=>`<option value="${k}">${texts[k].name}</option>`).join("")}</select>
+        <select id="textB">${Object.keys(texts).map((k,i)=>`<option value="${k}" ${i===1?'selected':''}>${texts[k].name}</option>`).join("")}</select>
+      </div>
+      <textarea id="reflectionText" placeholder="Skriv sammenligningen din her..."></textarea>
+      <div class="footer-nav">
+        <button class="ghost" onclick="revealModel()">Vis et eksempel på svar</button>
+        <button class="primary" onclick="finishGame()">Fullfør sammenligningen →</button>
+      </div>
+      <div id="modelAnswer"></div>
+    </div>
+  `;
+}
+function revealModel(){
+  const a = document.getElementById("textA").value;
+  const b = document.getElementById("textB").value;
+  document.getElementById("modelAnswer").innerHTML = `
+    <div class="factbox">
+      <h4>Eksempel-struktur for ${texts[a].name} vs. ${texts[b].name}</h4>
+      <p style="margin:0;">
+      <b>${texts[a].name}</b> (${texts[a].author}, ${texts[a].year}, ${texts[a].period}): ${texts[a].short}<br><br>
+      <b>${texts[b].name}</b> (${texts[b].author}, ${texts[b].year}, ${texts[b].period}): ${texts[b].short}<br><br>
+      Se etter: Er det samme type makt som utøves (kirke, familie, politi, samfunn)? Er hovedpersonen en kvinne som bærer konsekvensene av andres handlinger? Er fortellerstilen underspilt/antydende (etisk realisme) eller direkte anklagende (kritisk realisme)? Still gjerne spørsmålet: hva ville skjedd med denne hovedpersonen om historien var skrevet i dag?
+      </p>
+    </div>`;
+}
+function finishGame(){
+  state.reflection = document.getElementById("reflectionText").value;
+  state.textA = document.getElementById("textA").value;
+  state.textB = document.getElementById("textB").value;
+  state.screen = "final";
+  render();
+}
+
+// ---------- FINAL ----------
+function renderFinal(){
+  const total = state.pScore + state.gScore + state.mScore + (state.tlChecked && state.tlSlots.every((k,i)=>k===timelineOrder[i]) ? 5 : 0);
+  const max = periodQuestions.length + guessTheText.length + powerPairs.length + 5;
+  let verdict = "";
+  if(total/max > 0.85) verdict = "Skarpsindig sammenligning! Du ser mønstrene på tvers av tekstene tydelig.";
+  else if(total/max > 0.6) verdict = "Solid arbeid — noen forbindelser er verdt å se på en gang til.";
+  else verdict = "Sammenligningen er ikke helt i mål — gå gjerne en ny runde for å styrke analysen.";
+
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Sammenligningen er ferdig</h2>
+      <div class="final-score">${total} / ${max}</div>
+      <p class="lead">${verdict}</p>
+    </div>
+    <div class="card">
+      <h3>Det store bildet</h3>
+      <p>Fire av tekstene er skrevet innenfor den realistiske tradisjonen (1850–1940) og beveger seg fra poetisk realisme, via kritisk realisme og naturalisme, til etisk realisme. Den femte, «En asylsøkers jantelov» (2017), ligger utenfor perioden, men deler samme blikk for hvordan makt og fordommer former enkeltmenneskets liv.</p>
+      <p>Gjennomgående mønster: makten sitter sjelden hos hovedpersonen selv. Det er kirken, familien, politiet eller majoritetssamfunnet som setter reglene — og det er ofte kvinnen, eller den som står svakest, som bærer skammen og konsekvensene, mens den egentlige maktutøveren går fri.</p>
+      <div class="footer-nav">
+        <button class="ghost" onclick="downloadReflection()">Last ned analysen din</button>
+        <button class="primary" onclick="restart()">Start sammenligningen på nytt</button>
+      </div>
+    </div>
+  `;
+}
+function downloadReflection(){
+  const a = texts[state.textA] ? state.textA : "";
+  const b = texts[state.textB] ? state.textB : "";
+  const text = "Min sammenligning av «"+(texts[a]?texts[a].name:"")+"» og «"+(texts[b]?texts[b].name:"")+"»:\\n\\n" + (state.reflection || "(ingen tekst skrevet)");
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url; link.download = "min-sammenligning-realismen.txt";
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+function restart(){
+  state = {
+    screen:"start",
+    tlPool: [...timelineOrder].sort(()=>Math.random()-0.5),
+    tlSlots: [null,null,null,null,null],
+    tlChecked:false,
+    pIndex:0, pScore:0, pAnswered:false,
+    gIndex:0, gScore:0, gAnswered:false,
+    mIndex:0, mScore:0, mAnswered:false
+  };
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Under lupen: Amtmannens døtre</title>
+<style>
+  :root{
+    --bg:#0f1729; --panel:#182238; --panel2:#1f2c48; --gold:#d4af6a;
+    --text:#eef1f7; --muted:#9aa7c2; --good:#5fbf7f; --bad:#e3667a; --accent:#5b8def;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:radial-gradient(circle at top, #1a2440, #0a0f1e 70%);
+    font-family:'Georgia', 'Times New Roman', serif; color:var(--text); padding:24px;
+  }
+  .wrap{max-width:820px; margin:0 auto;}
+  header{text-align:center; margin-bottom:24px;}
+  header h1{font-size:1.9rem; margin:0 0 6px; letter-spacing:.5px;}
+  header p{color:var(--muted); margin:0; font-size:.95rem;}
+  .badge-row{display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
+  .badge{background:var(--panel2); border:1px solid #33456d; padding:6px 14px; border-radius:20px; font-size:.8rem; color:var(--muted);}
+  .badge.active{border-color:var(--gold); color:var(--gold);}
+  .card{
+    background:var(--panel); border:1px solid #29365a; border-radius:14px; padding:28px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); margin-bottom:18px;
+  }
+  h2{color:var(--gold); font-size:1.3rem; margin-top:0;}
+  h3{color:var(--text); font-size:1.05rem;}
+  p{line-height:1.6;}
+  .lead{color:var(--muted);}
+  .options{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  button{
+    font-family:inherit; cursor:pointer; border:1px solid #3a4a72; background:var(--panel2);
+    color:var(--text); padding:12px 16px; border-radius:10px; font-size:.98rem; text-align:left;
+    transition:.15s;
+  }
+  button:hover:not(:disabled){border-color:var(--accent); background:#243357;}
+  button:disabled{cursor:default; opacity:.55;}
+  .opt-correct{border-color:var(--good) !important; background:#173324 !important;}
+  .opt-wrong{border-color:var(--bad) !important; background:#3a1c24 !important;}
+  .primary{
+    background:var(--gold); color:#20200a; border:none; font-weight:bold; text-align:center;
+  }
+  .primary:hover:not(:disabled){background:#e8c785;}
+  .ghost{background:transparent; border:1px solid #3a4a72; text-align:center;}
+  .feedback{margin-top:14px; padding:14px; border-radius:10px; font-size:.93rem; line-height:1.5;}
+  .feedback.good{background:#12301f; border:1px solid var(--good); color:#c9f2d6;}
+  .feedback.bad{background:#301419; border:1px solid var(--bad); color:#f6cdd4;}
+  .cats{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;}
+  @media (max-width:560px){.cats{grid-template-columns:1fr;}}
+  .evidence-box{background:#101a30; border:1px dashed #33456d; padding:16px; border-radius:10px; font-style:italic; margin-bottom:6px;}
+  .footer-nav{display:flex; justify-content:space-between; margin-top:20px; gap:10px; flex-wrap:wrap;}
+  .score-line{font-size:.9rem; color:var(--muted); margin-top:10px;}
+  .factbox{background:#101a30; border:1px solid #33456d; border-radius:10px; padding:16px; margin-top:14px; font-size:.9rem;}
+  .factbox h4{margin:0 0 6px; color:var(--gold); font-size:.95rem;}
+  textarea{
+    width:100%; min-height:120px; background:#101a30; border:1px solid #33456d; border-radius:10px;
+    color:var(--text); font-family:inherit; padding:12px; font-size:.95rem; resize:vertical;
+  }
+  ul{line-height:1.7;}
+  .progress{height:6px; background:#101a30; border-radius:4px; overflow:hidden; margin-top:14px;}
+  .progress-fill{height:100%; background:var(--gold); transition:width .3s;}
+  .center{text-align:center;}
+  .final-score{font-size:2.4rem; color:var(--gold); font-weight:bold; text-align:center; margin:6px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>💍 Under lupen: Amtmannens døtre</h1>
+    <p>En roman av Camilla Collett (1854–55) — undersøk innholdet, plasseringen i den realistiske tradisjonen og temaet</p>
+    <div class="badge-row" id="badgeRow"></div>
+  </header>
+  <div id="app"></div>
+</div>
+
+<script>
+// ---------- DATA ----------
+const factsheet = {
+  "Romantikken (før 1850)": "Idealiserte følelser og harmoni. Konflikter løses ofte til slutt, og virkeligheten pyntes på. Fokus på det vakre og opphøyde, ikke samfunnskritikk.",
+  "Poetisk realisme (1850–1870)": "Overgangsperiode mellom romantikk og realisme. Fortsatt en del romantiske, idealiserende trekk i språk og stil — men samfunnsproblemer diskuteres nå åpent for første gang. Tendenslitteratur: teksten skal være nyttig og bety noe for samfunnet."
+};
+
+const level1 = [
+  {
+    q: "Hvem er Georg Kold, og hvorfor kommer han til amtmannsgården?",
+    options: [
+      "En prest som skal holde gudstjeneste",
+      "Den nyansatte huslæreren/fullmektigen ved amtmannens kontor",
+      "En slektning av amtmannen på besøk",
+      "En lege som skal behandle en av søstrene"
+    ],
+    correct: 1,
+    explain: "Georg Kold kommer til familien Ramm som nyansatt huslærer/fullmektig ved amtmannens kontor, og det er her han og Sofie møtes."
+  },
+  {
+    q: "Hva er Sofies situasjon i familien, og hva frykter hun?",
+    options: [
+      "Hun er den eldste og skal overta gården",
+      "Hun er den yngste amtmannsdatteren, og frykter å ende opp i et arrangert, kjærlighetsløst ekteskap slik søstrene hennes gjorde",
+      "Hun er enebarn uten søsken",
+      "Hun frykter fattigdom fordi familien har mistet formuen"
+    ],
+    correct: 1,
+    explain: "Sofie er den yngste av amtmannens døtre. Hun har sett søstrene bli giftet bort til menn de ikke elsker, og gruer seg til å møte samme skjebne."
+  },
+  {
+    q: "Hva skjer mellom Sofie og Georg Kold?",
+    options: [
+      "De gifter seg lykkelig med hverandres velsignelse",
+      "De forelsker seg i hverandre, men misforståelser og uheldige sammentreff gjør at Sofie mister tilliten til ham",
+      "De er søsken og kan derfor ikke gifte seg",
+      "De møtes aldri i romanen"
+    ],
+    correct: 1,
+    explain: "Selv om følelsene mellom Sofie og Georg fremstår som ekte kjærlighet, fører misforståelser og uheldige omstendigheter til at Sofie mister tilliten til ham."
+  },
+  {
+    q: "Hvem gifter Sofie seg med til slutt, og hvorfor?",
+    options: [
+      "Med Georg Kold, fordi hun til slutt tilgir ham",
+      "Med den langt eldre prosten Rein, fordi det er det familien og samfunnet forventer av henne",
+      "Hun forblir ugift resten av livet",
+      "Med en ung offiser hun møter på en fest"
+    ],
+    correct: 1,
+    explain: "Da den eldre prosten Rein frir, gifter Sofie seg med ham — ikke av kjærlighet, men fordi det er slik familien og omgivelsene forventer at hun skal handle."
+  },
+  {
+    q: "Hva har skjedd med Sofies søstre tidligere i romanen?",
+    options: [
+      "De har alle giftet seg lykkelig med menn de elsker",
+      "De er blitt giftet bort og lever i kjærlighetsløse ekteskap",
+      "De har alle valgt å forbli ugifte",
+      "De har flyttet til utlandet"
+    ],
+    correct: 1,
+    explain: "Amtmannen har giftet bort tre av døtrene sine til menn de ikke elsker — de lever resten av livet i kjærlighetsløse ekteskap. Sofie ser dette og frykter samme skjebne."
+  },
+  {
+    q: "Hva betyr det berømte sitatet «vår bestemmelse er å giftes, ikke å bli lykkelige»?",
+    options: [
+      "At kvinner på denne tiden giftet seg fordi de var dypt forelsket",
+      "At ekteskapet for kvinner var en sosial plikt og et mål i seg selv, uavhengig av om det ga lykke",
+      "At amtmannen selv var ulykkelig gift",
+      "At det ikke fantes noen forventning om ekteskap i det hele tatt"
+    ],
+    correct: 1,
+    explain: "Sitatet oppsummerer romanens kritikk: for datidens kvinner var selve ekteskapet målet — ikke kjærlighet eller personlig lykke, som samfunnet forventet at kvinnen skulle underordne seg."
+  },
+  {
+    q: "Hvorfor regnes «Amtmannens døtre» som et pionerverk?",
+    options: [
+      "Fordi det var den første norske romanen skrevet av en mann",
+      "Fordi det regnes som Norges første samfunnskritiske roman/tendensroman, og det første verket som for alvor tok opp kvinners manglende rettigheter",
+      "Fordi det var den første norske romanen oversatt til engelsk",
+      "Fordi det var den første romanen med lykkelig slutt"
+    ],
+    correct: 1,
+    explain: "Romanen regnes som Norges første samfunnskritiske roman og den første tendensromanen — det første verket som for alvor satte kvinners manglende rettigheter og handlingsrom under debatt."
+  }
+];
+
+const level2Cards = [
+  {text:"Følelser og konflikter løses ofte harmonisk til slutt, og virkeligheten fremstilles idealisert og vakker.", cat:"Romantikken"},
+  {text:"Fokus på det opphøyde og vakre snarere enn konkrete samfunnsproblemer.", cat:"Romantikken"},
+  {text:"Romanen tar for første gang i norsk litteratur opp et konkret samfunnsproblem til debatt: kvinners manglende rett til å velge selv i kjærlighet og ekteskap.", cat:"Poetisk realisme"},
+  {text:"Stilen har fortsatt romantiske trekk — et poetisk, følelsesladd språk — samtidig som innholdet peker fremover mot realismens samfunnskritikk.", cat:"Poetisk realisme"},
+  {text:"Teksten er tendenslitteratur: den skal være nyttig og bety noe for samfunnet, ikke bare underholde.", cat:"Poetisk realisme"},
+  {text:"Sofie ender opp med å innordne seg samfunnets forventninger til slutt, i stedet for å bryte fullstendig med dem — et tegn på at romanen ikke er en fullt utført kritisk realisme.", cat:"Poetisk realisme"}
+];
+const categories2 = ["Romantikken","Poetisk realisme"];
+
+const level3Cards = [
+  {text:"«Vår bestemmelse er å giftes, ikke å bli lykkelige» — ekteskapet er et mål i seg selv, ikke et middel til lykke.", theme:"Kjærlighetsløse, arrangerte ekteskap"},
+  {text:"Sofie må innordne seg og gifte seg med den langt eldre prosten Rein i stedet for mannen hun elsker.", theme:"Kjærlighetsløse, arrangerte ekteskap"},
+  {text:"Tre av amtmannens døtre er allerede giftet bort til menn de ikke elsker, og lever ulykkelige liv resten av tiden.", theme:"Kvinners manglende handlingsrom"},
+  {text:"Fortelleren kritiserer hvordan samfunnet — og særlig mennene — tvinger kvinner inn i en taus, passiv rolle der de må lide i stillhet.", theme:"Kvinners manglende handlingsrom"},
+  {text:"Camilla Collett skrev selv om hvordan hun ikke fikk gifte seg med mannen hun elsket, fordi familien ikke anså det som en passende allianse.", theme:"Kritikk av borgerlige oppdragelsesnormer"},
+  {text:"Misforståelser og sosiale konvensjoner — ikke mangel på ekte følelser — er det som ødelegger forholdet mellom Sofie og Georg Kold.", theme:"Kritikk av borgerlige oppdragelsesnormer"}
+];
+const themes3 = ["Kjærlighetsløse, arrangerte ekteskap","Kvinners manglende handlingsrom","Kritikk av borgerlige oppdragelsesnormer"];
+
+// ---------- STATE ----------
+let state = {
+  screen: "start",
+  l1index: 0, l1score: 0, l1answered:false,
+  l2index: 0, l2score: 0, l2answered:false, l2finalAnswered:false,
+  l3index: 0, l3matched: 0, l3answered:false
+};
+
+const app = document.getElementById("app");
+const badgeRow = document.getElementById("badgeRow");
+
+function updateBadges(){
+  const stages = ["Start","Amtmannsgården","Sporene","Bevistavlen","Konklusjon"];
+  const activeIdx = {start:0, l1:1, l1res:1, l2intro:2, l2:2, l2final:2, l2res:2, l3intro:3, l3:3, l3reflect:3, final:4}[state.screen] ?? 0;
+  badgeRow.innerHTML = stages.map((s,i)=>`<div class="badge ${i===activeIdx?'active':''}">${s}</div>`).join("");
+}
+
+function render(){
+  updateBadges();
+  if(state.screen==="start") return renderStart();
+  if(state.screen==="l1") return renderL1();
+  if(state.screen==="l1res") return renderL1Result();
+  if(state.screen==="l2intro") return renderL2Intro();
+  if(state.screen==="l2") return renderL2();
+  if(state.screen==="l2final") return renderL2Final();
+  if(state.screen==="l2res") return renderL2Result();
+  if(state.screen==="l3intro") return renderL3Intro();
+  if(state.screen==="l3") return renderL3();
+  if(state.screen==="l3reflect") return renderL3Reflect();
+  if(state.screen==="final") return renderFinal();
+}
+
+// ---------- START ----------
+function renderStart(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Saken du skal undersøke</h2>
+      <p>Camilla Colletts roman «Amtmannens døtre» (1854–55) regnes som Norges første samfunnskritiske roman. Bak den vakre fasaden på amtmannsgården skjuler det seg en bitter sannhet: for datidens kvinner var ekteskapet en plikt, ikke et valg — og slett ikke en vei til lykke.</p>
+      <p class="lead">Din jobb har tre deler:</p>
+      <ul>
+        <li><b>Amtmannsgården</b> — forstå hva som faktisk skjer med Sofie og søstrene hennes.</li>
+        <li><b>Sporene</b> — vurder hvordan romanen passer inn i den realistiske tradisjonen.</li>
+        <li><b>Bevistavlen</b> — avdekk hva romanen egentlig handler om.</li>
+      </ul>
+      <button class="primary" onclick="startL1()">Start undersøkelsen →</button>
+    </div>
+  `;
+}
+function startL1(){ state.screen="l1"; render(); }
+
+// ---------- LEVEL 1: INNHOLD ----------
+function renderL1(){
+  const q = level1[state.l1index];
+  const progress = Math.round((state.l1index/level1.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Amtmannsgården: Hva skjer med Sofie? (${state.l1index+1}/${level1.length})</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <h3 style="margin-top:20px;">${q.q}</h3>
+      <div class="options" id="opts">
+        ${q.options.map((o,i)=>`<button onclick="answerL1(${i})" id="l1opt${i}">${o}</button>`).join("")}
+      </div>
+      <div id="l1feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l1score}/${level1.length}</span>
+        <button class="primary" id="l1next" style="display:none" onclick="nextL1()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL1(i){
+  if(state.l1answered) return;
+  state.l1answered = true;
+  const q = level1[state.l1index];
+  document.querySelectorAll("#opts button").forEach((b,idx)=>{
+    b.disabled = true;
+    if(idx===q.correct) b.classList.add("opt-correct");
+    else if(idx===i) b.classList.add("opt-wrong");
+  });
+  const fb = document.getElementById("l1feedback");
+  const isCorrect = i===q.correct;
+  if(isCorrect) state.l1score++;
+  fb.innerHTML = `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig! ':'Ikke helt. '}${q.explain}</div>`;
+  document.getElementById("l1next").style.display = "inline-block";
+}
+function nextL1(){
+  state.l1index++;
+  state.l1answered = false;
+  if(state.l1index >= level1.length){ state.screen="l1res"; }
+  render();
+}
+function renderL1Result(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Amtmannsgården er kartlagt</h2>
+      <div class="final-score">${state.l1score} / ${level1.length}</div>
+      <p class="lead">Du har nå oversikt over hva som faktisk skjer: Sofie forelsker seg i huslæreren Georg Kold, men misforståelser og samfunnets forventninger fører til at hun i stedet gifter seg med den eldre prosten Rein — akkurat slik søstrene hennes måtte innordne seg tidligere.</p>
+      <button class="primary" onclick="state.screen='l2intro'; render();">Fortsett til sporene →</button>
+    </div>
+  `;
+}
+
+// ---------- LEVEL 2: SJANGER ----------
+function renderL2Intro(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Sporene: Hvilken litterær retning?</h2>
+      <p>«Amtmannens døtre» blir ofte omtalt som en overgangsroman — mellom romantikken og realismen. Du får seks "spor" — korte kjennetegn — som du skal plassere i riktig kategori. Bruk faktaboksen hvis du trenger hjelp.</p>
+      <div class="factbox">
+        ${Object.entries(factsheet).map(([k,v])=>`<h4>${k}</h4><p style="margin:0 0 10px;">${v}</p>`).join("")}
+      </div>
+      <button class="primary" onclick="state.screen='l2'; render();">Start sporfasen →</button>
+    </div>
+  `;
+}
+function renderL2(){
+  const c = level2Cards[state.l2index];
+  const progress = Math.round((state.l2index/level2Cards.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Spor ${state.l2index+1}/${level2Cards.length}</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box">"${c.text}"</div>
+      <p class="lead">Hvilken kategori hører dette kjennetegnet til?</p>
+      <div class="cats" id="cats2">
+        ${categories2.map(cat=>`<button onclick="answerL2('${cat}')" data-cat="${cat}">${cat}</button>`).join("")}
+      </div>
+      <div id="l2feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l2score}/${level2Cards.length}</span>
+        <button class="primary" id="l2next" style="display:none" onclick="nextL2()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL2(chosen){
+  if(state.l2answered) return;
+  state.l2answered = true;
+  const c = level2Cards[state.l2index];
+  document.querySelectorAll("#cats2 button").forEach(b=>{
+    b.disabled = true;
+    const cat = b.getAttribute("data-cat");
+    if(cat===c.cat) b.classList.add("opt-correct");
+    else if(cat===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===c.cat;
+  if(isCorrect) state.l2score++;
+  const key = Object.keys(factsheet).find(k=>k.startsWith(c.cat));
+  document.getElementById("l2feedback").innerHTML =
+    `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig — ':'Riktig svar er '+c.cat+'. '}${factsheet[key]}</div>`;
+  document.getElementById("l2next").style.display="inline-block";
+}
+function nextL2(){
+  state.l2index++;
+  state.l2answered = false;
+  if(state.l2index >= level2Cards.length){ state.screen="l2final"; }
+  render();
+}
+function renderL2Final(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Hovedspørsmålet: Hvor hører romanen selv til?</h2>
+      <p>Camilla Collett skrev «Amtmannens døtre» i 1854–55. Basert på det du nettopp har sortert — hvilken retning passer romanen best inn i?</p>
+      <div class="options" id="optsFinal">
+        <button onclick="answerL2Final(0)">Ren romantikk, uten noe realistisk innslag</button>
+        <button onclick="answerL2Final(1)">Poetisk realisme — en overgangsroman med romantisk stil, men med et tydelig samfunnskritisk tema</button>
+        <button onclick="answerL2Final(2)">Naturalisme, fordi karakterene styres helt av arv og drifter</button>
+        <button onclick="answerL2Final(3)">Etisk realisme, fordi handlingen er lagt til middelalderen</button>
+      </div>
+      <div id="l2finalFeedback"></div>
+      <div class="footer-nav">
+        <span></span>
+        <button class="primary" id="l2finalNext" style="display:none" onclick="state.screen='l2res'; render();">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL2Final(chosenIdx){
+  if(state.l2finalAnswered) return;
+  state.l2finalAnswered = true;
+  const correctIdx = 1;
+  document.querySelectorAll("#optsFinal button").forEach((b,idx)=>{
+    b.disabled = true;
+    if(idx===correctIdx) b.classList.add("opt-correct");
+    else if(idx===chosenIdx) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosenIdx===correctIdx;
+  if(isCorrect) state.l2score++;
+  document.getElementById("l2finalFeedback").innerHTML = `
+    <div class="feedback ${isCorrect?'good':'bad'}">
+    ${isCorrect?'Riktig! ':'Riktig svar er alternativ 2. '}
+    «Amtmannens døtre» hører til poetisk realisme (1850–1870), den første fasen av den realistiske tradisjonen. Romanen har fortsatt et poetisk, følelsesladd språk som minner om romantikken, men den er samtidig Norges første tendensroman: den setter et konkret samfunnsproblem — kvinners manglende rett til å velge i kjærlighet og ekteskap — under debatt, uten å pynte helt på virkeligheten slik en ren romantisk fortelling ville gjort.
+    </div>`;
+  document.getElementById("l2finalNext").style.display="inline-block";
+}
+function renderL2Result(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Sporene er sikret</h2>
+      <div class="final-score">${state.l2score} / ${level2Cards.length+1}</div>
+      <p class="lead">«Amtmannens døtre» er en overgangsroman i poetisk realisme: romantisk i stil, men banebrytende samfunnskritisk i tema.</p>
+      <button class="primary" onclick="state.screen='l3intro'; render();">Fortsett til bevistavlen →</button>
+    </div>
+  `;
+}
+
+// ---------- LEVEL 3: TEMA ----------
+function renderL3Intro(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Bevistavlen: Hva handler romanen egentlig om?</h2>
+      <p>Du får seks biter med "bevis" fra romanen. Koble hvert bevis til det temaet det best illustrerer: <b>Kjærlighetsløse, arrangerte ekteskap</b>, <b>Kvinners manglende handlingsrom</b>, eller <b>Kritikk av borgerlige oppdragelsesnormer</b>.</p>
+      <button class="primary" onclick="state.screen='l3'; render();">Undersøk bevisene →</button>
+    </div>
+  `;
+}
+function renderL3(){
+  const c = level3Cards[state.l3index];
+  const progress = Math.round((state.l3index/level3Cards.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Bevis ${state.l3index+1}/${level3Cards.length}</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box">${c.text}</div>
+      <p class="lead">Hvilket tema hører dette beviset til?</p>
+      <div class="cats" id="cats3">
+        ${themes3.map(t=>`<button onclick="answerL3('${t}')" data-t="${t}">${t}</button>`).join("")}
+      </div>
+      <div id="l3feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l3matched}/${level3Cards.length}</span>
+        <button class="primary" id="l3next" style="display:none" onclick="nextL3()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL3(chosen){
+  if(state.l3answered) return;
+  state.l3answered = true;
+  const c = level3Cards[state.l3index];
+  document.querySelectorAll("#cats3 button").forEach(b=>{
+    b.disabled = true;
+    const t = b.getAttribute("data-t");
+    if(t===c.theme) b.classList.add("opt-correct");
+    else if(t===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===c.theme;
+  if(isCorrect) state.l3matched++;
+  document.getElementById("l3feedback").innerHTML =
+    `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig!':'Riktig tema er '+c.theme+'.'} Dette beviset knytter seg til <b>${c.theme}</b> i romanen.</div>`;
+  document.getElementById("l3next").style.display="inline-block";
+}
+function nextL3(){
+  state.l3index++;
+  state.l3answered = false;
+  if(state.l3index >= level3Cards.length){ state.screen="l3reflect"; }
+  render();
+}
+function renderL3Reflect(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Din konklusjon: Hva vil Collett si med romanen?</h2>
+      <p class="lead">Skriv 3–5 setninger der du svarer på spørsmålet over, og forklar hvorfor «Amtmannens døtre» regnes som et pionerverk i norsk litteratur, selv om Sofie til slutt underordner seg samfunnets forventninger.</p>
+      <textarea id="reflectionText" placeholder="Skriv svaret ditt her..."></textarea>
+      <div class="footer-nav">
+        <button class="ghost" onclick="revealModel()">Vis et eksempel på svar</button>
+        <button class="primary" onclick="finishGame()">Fullfør undersøkelsen →</button>
+      </div>
+      <div id="modelAnswer"></div>
+    </div>
+  `;
+}
+function revealModel(){
+  document.getElementById("modelAnswer").innerHTML = `
+    <div class="factbox">
+      <h4>Eksempel på svar</h4>
+      <p style="margin:0;">Collett vil vise at datidens ekteskapsordning ikke tar hensyn til kvinners følelser eller lykke, men behandler ekteskapet som en sosial plikt kvinnen ikke har noe reelt valg i. At Sofie til slutt gifter seg med prosten Rein i stedet for Georg Kold, gjør kritikken enda sterkere: selv en kvinne som forstår problemet og lengter etter noe annet, ender opp med å bøye seg for presset. Nettopp derfor regnes romanen som et pionerverk — den var den første som satte dette som et offentlig samfunnsproblem, ikke bare en privat sorg.</p>
+    </div>`;
+}
+function finishGame(){
+  state.reflection = document.getElementById("reflectionText").value;
+  state.screen = "final";
+  render();
+}
+
+// ---------- FINAL ----------
+function renderFinal(){
+  const total = state.l1score + state.l2score + state.l3matched;
+  const max = level1.length + (level2Cards.length+1) + level3Cards.length;
+  let verdict = "";
+  if(total/max > 0.85) verdict = "Skarpsindig leser! Du har god kontroll på innhold, sjanger og tema.";
+  else if(total/max > 0.6) verdict = "Solid undersøkelsesarbeid — noen spor er verdt å se på en gang til.";
+  else verdict = "Saken er ikke helt løst ennå — gå gjerne en ny runde for å styrke bevisene dine.";
+
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Undersøkelsen er avsluttet</h2>
+      <div class="final-score">${total} / ${max}</div>
+      <p class="lead">${verdict}</p>
+    </div>
+    <div class="card">
+      <h3>Oppsummering av saken</h3>
+      <p><b>Innhold:</b> Den yngste amtmannsdatteren Sofie forelsker seg i huslæreren Georg Kold, men misforståelser og samfunnets forventninger gjør at hun i stedet gifter seg med den langt eldre prosten Rein — akkurat slik søstrene hennes tidligere måtte innordne seg kjærlighetsløse ekteskap.</p>
+      <p><b>Sjanger:</b> Romanen hører til poetisk realisme (1850–1870): en overgangsroman med romantisk, følelsesladd stil, men med et tydelig samfunnskritisk tema — Norges første tendensroman.</p>
+      <p><b>Tema:</b> Kjærlighetsløse, arrangerte ekteskap, kvinners manglende handlingsrom, og kritikk av borgerlige oppdragelsesnormer — samlet i det berømte sitatet om at kvinnens «bestemmelse er å giftes, ikke å bli lykkelige».</p>
+      <div class="footer-nav">
+        <button class="ghost" onclick="downloadReflection()">Last ned refleksjonen din</button>
+        <button class="primary" onclick="restart()">Start undersøkelsen på nytt</button>
+      </div>
+    </div>
+  `;
+}
+function downloadReflection(){
+  const text = "Min konklusjon om «Amtmannens døtre» av Camilla Collett:\\n\\n" + (state.reflection || "(ingen tekst skrevet)");
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "min-konklusjon-amtmannens-dotre.txt";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function restart(){
+  state = { screen:"start", l1index:0,l1score:0,l1answered:false, l2index:0,l2score:0,l2answered:false,l2finalAnswered:false, l3index:0,l3matched:0,l3answered:false };
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

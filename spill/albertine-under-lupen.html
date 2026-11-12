@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Under lupen: Albertine</title>
+<style>
+  :root{
+    --bg:#0f1729; --panel:#182238; --panel2:#1f2c48; --gold:#d4af6a;
+    --text:#eef1f7; --muted:#9aa7c2; --good:#5fbf7f; --bad:#e3667a; --accent:#5b8def;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:radial-gradient(circle at top, #1a2440, #0a0f1e 70%);
+    font-family:'Georgia', 'Times New Roman', serif; color:var(--text); padding:24px;
+  }
+  .wrap{max-width:820px; margin:0 auto;}
+  header{text-align:center; margin-bottom:24px;}
+  header h1{font-size:1.9rem; margin:0 0 6px; letter-spacing:.5px;}
+  header p{color:var(--muted); margin:0; font-size:.95rem;}
+  .badge-row{display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
+  .badge{background:var(--panel2); border:1px solid #33456d; padding:6px 14px; border-radius:20px; font-size:.8rem; color:var(--muted);}
+  .badge.active{border-color:var(--gold); color:var(--gold);}
+  .card{
+    background:var(--panel); border:1px solid #29365a; border-radius:14px; padding:28px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); margin-bottom:18px;
+  }
+  h2{color:var(--gold); font-size:1.3rem; margin-top:0;}
+  h3{color:var(--text); font-size:1.05rem;}
+  p{line-height:1.6;}
+  .lead{color:var(--muted);}
+  .options{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  button{
+    font-family:inherit; cursor:pointer; border:1px solid #3a4a72; background:var(--panel2);
+    color:var(--text); padding:12px 16px; border-radius:10px; font-size:.98rem; text-align:left;
+    transition:.15s;
+  }
+  button:hover:not(:disabled){border-color:var(--accent); background:#243357;}
+  button:disabled{cursor:default; opacity:.55;}
+  .opt-correct{border-color:var(--good) !important; background:#173324 !important;}
+  .opt-wrong{border-color:var(--bad) !important; background:#3a1c24 !important;}
+  .primary{
+    background:var(--gold); color:#20200a; border:none; font-weight:bold; text-align:center;
+  }
+  .primary:hover:not(:disabled){background:#e8c785;}
+  .ghost{background:transparent; border:1px solid #3a4a72; text-align:center;}
+  .feedback{margin-top:14px; padding:14px; border-radius:10px; font-size:.93rem; line-height:1.5;}
+  .feedback.good{background:#12301f; border:1px solid var(--good); color:#c9f2d6;}
+  .feedback.bad{background:#301419; border:1px solid var(--bad); color:#f6cdd4;}
+  .cats{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;}
+  @media (max-width:560px){.cats{grid-template-columns:1fr;}}
+  .evidence-box{background:#101a30; border:1px dashed #33456d; padding:16px; border-radius:10px; font-style:italic; margin-bottom:6px;}
+  .footer-nav{display:flex; justify-content:space-between; margin-top:20px; gap:10px; flex-wrap:wrap;}
+  .score-line{font-size:.9rem; color:var(--muted); margin-top:10px;}
+  .factbox{background:#101a30; border:1px solid #33456d; border-radius:10px; padding:16px; margin-top:14px; font-size:.9rem;}
+  .factbox h4{margin:0 0 6px; color:var(--gold); font-size:.95rem;}
+  textarea{
+    width:100%; min-height:120px; background:#101a30; border:1px solid #33456d; border-radius:10px;
+    color:var(--text); font-family:inherit; padding:12px; font-size:.95rem; resize:vertical;
+  }
+  ul{line-height:1.7;}
+  .progress{height:6px; background:#101a30; border-radius:4px; overflow:hidden; margin-top:14px;}
+  .progress-fill{height:100%; background:var(--gold); transition:width .3s;}
+  .center{text-align:center;}
+  .final-score{font-size:2.4rem; color:var(--gold); font-weight:bold; text-align:center; margin:6px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🪡 Under lupen: Albertine</h1>
+    <p>En roman av Christian Krohg (1886) — undersøk innholdet, plasseringen i den realistiske tradisjonen og temaet</p>
+    <div class="badge-row" id="badgeRow"></div>
+  </header>
+  <div id="app"></div>
+</div>
+
+<script>
+// ---------- DATA ----------
+const factsheet = {
+  "Kritisk realisme (1870–1880)": "Skarp og direkte samfunnskritikk. Forfatteren vil bevisst påvirke leseren til å ta standpunkt i en debatt (tendenslitteratur). Avdekker dobbeltmoral og maktmisbruk hos autoriteter.",
+  "Naturalisme (1880–1890)": "Mennesket styres av arv, drifter og miljø — fri vilje er nesten fraværende. Ofte brutale, direkte skildringer av fattigdom, seksualitet og sosial nød. Kristiania-bohemen (bl.a. Christian Krohg) praktiserte fri kjærlighet og utfordret samfunnets syn på seksualitet."
+};
+
+const level1 = [
+  {
+    q: "Hvem er Albertine, og hva er situasjonen hennes ved starten av romanen?",
+    options: [
+      "En rik borgerdatter som kjeder seg",
+      "En fattig, ung syerske i Kristiania som strever med å tjene nok til husleien",
+      "En gift kvinne med egen husholdning",
+      "En lærerinne på landsbygda"
+    ],
+    correct: 1,
+    explain: "Albertine er en fattig syerske i Kristiania som sitter inne og syr for å klare husleien — hun har knapt råd til klær som gjør at hun kan gå ut."
+  },
+  {
+    q: "Hva har skjedd med søsteren Oline, og hvorfor er dette viktig for Albertine?",
+    options: [
+      "Oline har giftet seg rikt og flyttet fra byen",
+      "Oline er død, og Albertine sørger",
+      "Oline har blitt prostituert, og Albertine er desperat etter å unngå samme skjebne",
+      "Oline er Albertines beste venninne uten problemer"
+    ],
+    correct: 2,
+    explain: "Oline har havnet i prostitusjon, noe familien opplever som et hardt slag. Albertine bruker mye energi på å unngå å ende opp på samme måte."
+  },
+  {
+    q: "Hvem er politifullmektig Winther, og hva gjør han mot Albertine?",
+    options: [
+      "En snill nabo som hjelper familien økonomisk",
+      "En politimann som forfører og senere voldtar Albertine mens hun er bevisstløs",
+      "Albertines forlovede som hun gifter seg med lykkelig",
+      "En lege som behandler broren hennes"
+    ],
+    correct: 1,
+    explain: "Winther er en politifullmektig som forfølger og forfører Albertine, og som til slutt voldtar henne mens hun er bevisstløs — et vendepunkt i romanen."
+  },
+  {
+    q: "Hva skjer med Albertine etter overgrepet, og hvilken institusjon møter hun?",
+    options: [
+      "Hun flytter til utlandet og starter et nytt liv",
+      "Hun blir registrert som prostituert og må gjennom ydmykende, tvungne underlivsundersøkelser hos politilegen",
+      "Hun blir innlagt på sykehus for en helt annen sykdom",
+      "Hun blir dømt til fengsel for tyveri"
+    ],
+    correct: 1,
+    explain: "Albertine ender opp registrert som prostituert og må møte til jevnlige, ydmykende undersøkelser hos politilegen — en praksis Krohg bruker romanen til å kritisere."
+  },
+  {
+    q: "Hvordan endrer Albertine seg fra starten til slutten av romanen?",
+    options: [
+      "Hun forblir like sjenert og tilbaketrukket hele veien",
+      "Hun går fra å være sjenert og forsiktig til å rope kynisk og hardt ut til unge menn på gaten",
+      "Hun blir mer religiøs og from",
+      "Hun gifter seg og får et rolig liv"
+    ],
+    correct: 1,
+    explain: "Den tidligere sjenerte og forsiktige Albertine ender med å rope ut til unge gutter som går forbi — en brutal kontrast som viser hvor mye samfunnet har ødelagt henne."
+  },
+  {
+    q: "Hva skjedde med romanen rett etter utgivelsen i 1886?",
+    options: [
+      "Den ble en umiddelbar bestselger uten kontrovers",
+      "Den ble beslaglagt av norske myndigheter dagen etter utgivelsen, og Krohg ble senere dømt til å betale bot",
+      "Den ble oversatt til flere språk med det samme",
+      "Den ble ignorert av samtiden"
+    ],
+    correct: 1,
+    explain: "Boken ble beslaglagt dagen etter utgivelsen. Høyesterett stadfestet beslaget i 1888, og Krohg måtte betale en bot — et tegn på hvor provoserende teksten var i sin samtid."
+  },
+  {
+    q: "Hvilken praktisk endring i samfunnet fulgte i kjølvannet av debatten «Albertine» var en del av?",
+    options: [
+      "Prostitusjon ble forbudt med en gang",
+      "Politiets rett til å innkalle prostituerte til tvungne underlivsundersøkelser ble endret",
+      "Kvinner fikk stemmerett samme år",
+      "Ingenting endret seg i lovverket"
+    ],
+    correct: 1,
+    explain: "Som en vellykket tendensroman bidro Albertine til at prostitusjonslovene ble endret — blant annet at politiet ikke lenger kunne kalle prostituerte inn til slike undersøkelser."
+  }
+];
+
+const level2Cards = [
+  {text:"Romanen er et bevisst innlegg i datidens moraldebatt, ment for å påvirke leserens holdning til den offentlige, politikontrollerte prostitusjonen.", cat:"Kritisk realisme"},
+  {text:"Fortellingen avdekker at det er en politimann — en representant for loven — som selv begår overgrepet, en tydelig avsløring av autoritetenes dobbeltmoral.", cat:"Kritisk realisme"},
+  {text:"Romanen førte faktisk til en lovendring, og er derfor et eksempel på en vellykket tendensroman.", cat:"Kritisk realisme"},
+  {text:"Albertines skjebne styres mer av fattigdom, miljø og tilfeldigheter enn av hennes egne valg — hun har liten reell fri vilje.", cat:"Naturalisme"},
+  {text:"Krohg skildrer samfunnets skyggesider — fattigdom og prostitusjon — med brutal, ufordervet detaljrikdom, uten å pynte på virkeligheten.", cat:"Naturalisme"},
+  {text:"Krohg var med i Kristiania-bohemen, en gruppe som praktiserte fri kjærlighet og ville endre synet på seksualitet og samliv.", cat:"Naturalisme"},
+  {text:"Handlingen følger en nesten uunngåelig, nedadgående utvikling («undergangslogikk») der Albertine til slutt ender opp akkurat som søsteren hun fryktet å bli lik.", cat:"Naturalisme"}
+];
+const categories2 = ["Kritisk realisme","Naturalisme"];
+
+const level3Cards = [
+  {text:"Winther, en politifullmektig, forfører og voldtar Albertine — samtidig som han representerer loven som skal beskytte henne.", theme:"Maktmisbruk og dobbeltmoral"},
+  {text:"Etter overgrepet blir det Albertine, ikke Winther, som må gjennom ydmykende undersøkelser og bli registrert som «den skyldige» part.", theme:"Maktmisbruk og dobbeltmoral"},
+  {text:"Familiens fattigdom tvinger Albertine til å sy innendørs i ukevis for å klare husleien, mens broren er alvorlig syk.", theme:"Fattigdom"},
+  {text:"Oline endte i prostitusjon før Albertine, og søsterens skjebne blir et bilde på hvor lite albertine faktisk kan styre sitt eget liv.", theme:"Kvinners manglende handlingsrom"},
+  {text:"Albertine går fra sjenert og forsiktig til å rope kynisk til gutter på gaten — en total forvandling som samfunnet har påtvunget henne.", theme:"Prostitusjon som samfunnsproblem"},
+  {text:"Boken ble beslaglagt av myndighetene dagen etter utgivelsen — de som burde bli kritisert, forsøkte i stedet å stanse kritikken.", theme:"Maktmisbruk og dobbeltmoral"}
+];
+const themes3 = ["Fattigdom","Prostitusjon som samfunnsproblem","Maktmisbruk og dobbeltmoral","Kvinners manglende handlingsrom"];
+
+// ---------- STATE ----------
+let state = {
+  screen: "start",
+  l1index: 0, l1score: 0, l1answered:false,
+  l2index: 0, l2score: 0, l2answered:false, l2finalAnswered:false,
+  l3index: 0, l3matched: 0, l3answered:false
+};
+
+const app = document.getElementById("app");
+const badgeRow = document.getElementById("badgeRow");
+
+function updateBadges(){
+  const stages = ["Start","Kristiania","Sporene","Bevistavlen","Konklusjon"];
+  const activeIdx = {start:0, l1:1, l1res:1, l2intro:2, l2:2, l2final:2, l2res:2, l3intro:3, l3:3, l3reflect:3, final:4}[state.screen] ?? 0;
+  badgeRow.innerHTML = stages.map((s,i)=>`<div class="badge ${i===activeIdx?'active':''}">${s}</div>`).join("");
+}
+
+function render(){
+  updateBadges();
+  if(state.screen==="start") return renderStart();
+  if(state.screen==="l1") return renderL1();
+  if(state.screen==="l1res") return renderL1Result();
+  if(state.screen==="l2intro") return renderL2Intro();
+  if(state.screen==="l2") return renderL2();
+  if(state.screen==="l2final") return renderL2Final();
+  if(state.screen==="l2res") return renderL2Result();
+  if(state.screen==="l3intro") return renderL3Intro();
+  if(state.screen==="l3") return renderL3();
+  if(state.screen==="l3reflect") return renderL3Reflect();
+  if(state.screen==="final") return renderFinal();
+}
+
+// ---------- START ----------
+function renderStart(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Saken du skal undersøke</h2>
+      <p>Christian Krohgs roman «Albertine» (1886) fortalte en historie samfunnet helst ville tie i hjel: en fattig syersyerskes vei inn i tvungen prostitusjon, med politiet selv som overgriper. Romanen ble beslaglagt dagen etter utgivelsen — men bidro likevel til at loven ble endret.</p>
+      <p class="lead">Din jobb har tre deler:</p>
+      <ul>
+        <li><b>Kristiania</b> — forstå hva som faktisk skjer med Albertine.</li>
+        <li><b>Sporene</b> — vurder hvordan romanen passer inn i den realistiske tradisjonen.</li>
+        <li><b>Bevistavlen</b> — avdekk hva romanen egentlig handler om.</li>
+      </ul>
+      <button class="primary" onclick="startL1()">Start undersøkelsen →</button>
+    </div>
+  `;
+}
+function startL1(){ state.screen="l1"; render(); }
+
+// ---------- LEVEL 1: INNHOLD ----------
+function renderL1(){
+  const q = level1[state.l1index];
+  const progress = Math.round((state.l1index/level1.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Kristiania: Hva skjer med Albertine? (${state.l1index+1}/${level1.length})</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <h3 style="margin-top:20px;">${q.q}</h3>
+      <div class="options" id="opts">
+        ${q.options.map((o,i)=>`<button onclick="answerL1(${i})" id="l1opt${i}">${o}</button>`).join("")}
+      </div>
+      <div id="l1feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l1score}/${level1.length}</span>
+        <button class="primary" id="l1next" style="display:none" onclick="nextL1()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL1(i){
+  if(state.l1answered) return;
+  state.l1answered = true;
+  const q = level1[state.l1index];
+  document.querySelectorAll("#opts button").forEach((b,idx)=>{
+    b.disabled = true;
+    if(idx===q.correct) b.classList.add("opt-correct");
+    else if(idx===i) b.classList.add("opt-wrong");
+  });
+  const fb = document.getElementById("l1feedback");
+  const isCorrect = i===q.correct;
+  if(isCorrect) state.l1score++;
+  fb.innerHTML = `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig! ':'Ikke helt. '}${q.explain}</div>`;
+  document.getElementById("l1next").style.display = "inline-block";
+}
+function nextL1(){
+  state.l1index++;
+  state.l1answered = false;
+  if(state.l1index >= level1.length){ state.screen="l1res"; }
+  render();
+}
+function renderL1Result(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Kristiania er kartlagt</h2>
+      <div class="final-score">${state.l1score} / ${level1.length}</div>
+      <p class="lead">Du har nå oversikt over hva som faktisk skjer med Albertine: fra fattigdom og frykt for søsterens skjebne, via overgrepet fra politifullmektig Winther, til hun selv ender opp registrert som prostituert — og hvordan romanen skapte skandale og faktisk endret loven.</p>
+      <button class="primary" onclick="state.screen='l2intro'; render();">Fortsett til sporene →</button>
+    </div>
+  `;
+}
+
+// ---------- LEVEL 2: SJANGER ----------
+function renderL2Intro(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Sporene: Hvilken litterær retning?</h2>
+      <p>«Albertine» befinner seg i grenselandet mellom to perioder i den realistiske tradisjonen. Du får sju "spor" — korte kjennetegn — som du skal plassere i riktig kategori. Bruk faktaboksen hvis du trenger hjelp.</p>
+      <div class="factbox">
+        ${Object.entries(factsheet).map(([k,v])=>`<h4>${k}</h4><p style="margin:0 0 10px;">${v}</p>`).join("")}
+      </div>
+      <button class="primary" onclick="state.screen='l2'; render();">Start sporfasen →</button>
+    </div>
+  `;
+}
+function renderL2(){
+  const c = level2Cards[state.l2index];
+  const progress = Math.round((state.l2index/level2Cards.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Spor ${state.l2index+1}/${level2Cards.length}</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box">"${c.text}"</div>
+      <p class="lead">Hvilken periode hører dette kjennetegnet til?</p>
+      <div class="cats" id="cats2">
+        ${categories2.map(cat=>`<button onclick="answerL2('${cat}')" data-cat="${cat}">${cat}</button>`).join("")}
+      </div>
+      <div id="l2feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l2score}/${level2Cards.length}</span>
+        <button class="primary" id="l2next" style="display:none" onclick="nextL2()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL2(chosen){
+  if(state.l2answered) return;
+  state.l2answered = true;
+  const c = level2Cards[state.l2index];
+  document.querySelectorAll("#cats2 button").forEach(b=>{
+    b.disabled = true;
+    const cat = b.getAttribute("data-cat");
+    if(cat===c.cat) b.classList.add("opt-correct");
+    else if(cat===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===c.cat;
+  if(isCorrect) state.l2score++;
+  const key = Object.keys(factsheet).find(k=>k.startsWith(c.cat));
+  document.getElementById("l2feedback").innerHTML =
+    `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig — ':'Riktig svar er '+c.cat+'. '}${factsheet[key]}</div>`;
+  document.getElementById("l2next").style.display="inline-block";
+}
+function nextL2(){
+  state.l2index++;
+  state.l2answered = false;
+  if(state.l2index >= level2Cards.length){ state.screen="l2final"; }
+  render();
+}
+function renderL2Final(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Hovedspørsmålet: Hvor hører romanen selv til?</h2>
+      <p>Christian Krohg skrev «Albertine» i 1886. Basert på det du nettopp har sortert — hvordan bør vi vurdere romanens plassering i den realistiske tradisjonen?</p>
+      <div class="options" id="optsFinal">
+        <button onclick="answerL2Final(0)">Ren kritisk realisme, uten noe naturalistisk preg</button>
+        <button onclick="answerL2Final(1)">En roman som ligger i skjæringspunktet: den bruker kritisk realismes tendens (bevisst samfunnskritikk som endret loven), men skildringen av Albertines nesten uunngåelige skjebne er tydelig naturalistisk</button>
+        <button onclick="answerL2Final(2)">Ren naturalisme, uten samfunnskritisk hensikt</button>
+        <button onclick="answerL2Final(3)">Verken kritisk realisme eller naturalisme, men etisk realisme</button>
+      </div>
+      <div id="l2finalFeedback"></div>
+      <div class="footer-nav">
+        <span></span>
+        <button class="primary" id="l2finalNext" style="display:none" onclick="state.screen='l2res'; render();">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL2Final(chosenIdx){
+  if(state.l2finalAnswered) return;
+  state.l2finalAnswered = true;
+  const correctIdx = 1;
+  document.querySelectorAll("#optsFinal button").forEach((b,idx)=>{
+    b.disabled = true;
+    if(idx===correctIdx) b.classList.add("opt-correct");
+    else if(idx===chosenIdx) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosenIdx===correctIdx;
+  if(isCorrect) state.l2score++;
+  document.getElementById("l2finalFeedback").innerHTML = `
+    <div class="feedback ${isCorrect?'good':'bad'}">
+    ${isCorrect?'Riktig! ':'Riktig svar er alternativ 2. '}
+    «Albertine» skrives ofte inn i naturalismen (1880–1890) på grunn av sin brutale, detaljerte skildring av fattigdom og den nesten uunngåelige «undergangslogikken» i Albertines skjebne. Samtidig er romanen et bevisst tendensverk i kritisk realismes ånd — den ville avsløre en konkret samfunnsurett, og lyktes faktisk i å endre loven. Krohg selv var en del av Kristiania-bohemen, som stod naturalismen nær.
+    </div>`;
+  document.getElementById("l2finalNext").style.display="inline-block";
+}
+function renderL2Result(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Sporene er sikret</h2>
+      <div class="final-score">${state.l2score} / ${level2Cards.length+1}</div>
+      <p class="lead">«Albertine» ligger i skjæringspunktet mellom kritisk realisme og naturalisme: en tendensroman med naturalistisk detaljrikdom og undergangslogikk.</p>
+      <button class="primary" onclick="state.screen='l3intro'; render();">Fortsett til bevistavlen →</button>
+    </div>
+  `;
+}
+
+// ---------- LEVEL 3: TEMA ----------
+function renderL3Intro(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Bevistavlen: Hva handler romanen egentlig om?</h2>
+      <p>Du får seks biter med "bevis" fra romanen. Koble hvert bevis til det temaet det best illustrerer: <b>Fattigdom</b>, <b>Prostitusjon som samfunnsproblem</b>, <b>Maktmisbruk og dobbeltmoral</b>, eller <b>Kvinners manglende handlingsrom</b>.</p>
+      <button class="primary" onclick="state.screen='l3'; render();">Undersøk bevisene →</button>
+    </div>
+  `;
+}
+function renderL3(){
+  const c = level3Cards[state.l3index];
+  const progress = Math.round((state.l3index/level3Cards.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Bevis ${state.l3index+1}/${level3Cards.length}</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box">${c.text}</div>
+      <p class="lead">Hvilket tema hører dette beviset til?</p>
+      <div class="cats" id="cats3">
+        ${themes3.map(t=>`<button onclick="answerL3('${t}')" data-t="${t}">${t}</button>`).join("")}
+      </div>
+      <div id="l3feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l3matched}/${level3Cards.length}</span>
+        <button class="primary" id="l3next" style="display:none" onclick="nextL3()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL3(chosen){
+  if(state.l3answered) return;
+  state.l3answered = true;
+  const c = level3Cards[state.l3index];
+  document.querySelectorAll("#cats3 button").forEach(b=>{
+    b.disabled = true;
+    const t = b.getAttribute("data-t");
+    if(t===c.theme) b.classList.add("opt-correct");
+    else if(t===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===c.theme;
+  if(isCorrect) state.l3matched++;
+  document.getElementById("l3feedback").innerHTML =
+    `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig!':'Riktig tema er '+c.theme+'.'} Dette beviset knytter seg til <b>${c.theme}</b> i romanen.</div>`;
+  document.getElementById("l3next").style.display="inline-block";
+}
+function nextL3(){
+  state.l3index++;
+  state.l3answered = false;
+  if(state.l3index >= level3Cards.length){ state.screen="l3reflect"; }
+  render();
+}
+function renderL3Reflect(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Din konklusjon: Hvem har skylden for det som skjer med Albertine?</h2>
+      <p class="lead">Skriv 3–5 setninger der du svarer på spørsmålet over, og forklar hvorfor romanen ble sett på som så farlig at myndighetene beslagla den.</p>
+      <textarea id="reflectionText" placeholder="Skriv svaret ditt her..."></textarea>
+      <div class="footer-nav">
+        <button class="ghost" onclick="revealModel()">Vis et eksempel på svar</button>
+        <button class="primary" onclick="finishGame()">Fullfør undersøkelsen →</button>
+      </div>
+      <div id="modelAnswer"></div>
+    </div>
+  `;
+}
+function revealModel(){
+  document.getElementById("modelAnswer").innerHTML = `
+    <div class="factbox">
+      <h4>Eksempel på svar</h4>
+      <p style="margin:0;">Det er ikke Albertine selv, men samfunnet og systemet rundt henne som har skylden: fattigdommen som tvinger henne inn i en håpløs situasjon, og politimannen Winther som misbruker sin makt til å utnytte henne — for så å la henne, og ikke ham, bli straffet med ydmykende undersøkelser og et stemplet rykte. Romanen ble beslaglagt fordi den pekte rett på embetsmenn og et system samfunnets øvre lag ønsket å beskytte, ikke fordi den var umoralsk i seg selv.</p>
+    </div>`;
+}
+function finishGame(){
+  state.reflection = document.getElementById("reflectionText").value;
+  state.screen = "final";
+  render();
+}
+
+// ---------- FINAL ----------
+function renderFinal(){
+  const total = state.l1score + state.l2score + state.l3matched;
+  const max = level1.length + (level2Cards.length+1) + level3Cards.length;
+  let verdict = "";
+  if(total/max > 0.85) verdict = "Skarpsindig leser! Du har god kontroll på innhold, sjanger og tema.";
+  else if(total/max > 0.6) verdict = "Solid undersøkelsesarbeid — noen spor er verdt å se på en gang til.";
+  else verdict = "Saken er ikke helt løst ennå — gå gjerne en ny runde for å styrke bevisene dine.";
+
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Undersøkelsen er avsluttet</h2>
+      <div class="final-score">${total} / ${max}</div>
+      <p class="lead">${verdict}</p>
+    </div>
+    <div class="card">
+      <h3>Oppsummering av saken</h3>
+      <p><b>Innhold:</b> Den fattige syersken Albertine forsøker desperat å unngå søsteren Olines skjebne som prostituert, men blir voldtatt av politifullmektig Winther og ender selv opp registrert som prostituert, tvunget gjennom ydmykende undersøkelser. Romanen ble beslaglagt av myndighetene rett etter utgivelsen, men bidro likevel til en lovendring.</p>
+      <p><b>Sjanger:</b> «Albertine» ligger i skjæringspunktet mellom kritisk realisme og naturalisme: en bevisst tendensroman med naturalistisk detaljrikdom og en nesten uunngåelig undergangslogikk.</p>
+      <p><b>Tema:</b> Fattigdom, prostitusjon som samfunnsproblem, maktmisbruk og dobbeltmoral hos autoriteter, og kvinners manglende handlingsrom i et samfunn som straffer offeret i stedet for gjerningsmannen.</p>
+      <div class="footer-nav">
+        <button class="ghost" onclick="downloadReflection()">Last ned refleksjonen din</button>
+        <button class="primary" onclick="restart()">Start undersøkelsen på nytt</button>
+      </div>
+    </div>
+  `;
+}
+function downloadReflection(){
+  const text = "Min konklusjon om «Albertine» av Christian Krohg:\\n\\n" + (state.reflection || "(ingen tekst skrevet)");
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "min-konklusjon-albertine.txt";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function restart(){
+  state = { screen:"start", l1index:0,l1score:0,l1answered:false, l2index:0,l2score:0,l2answered:false,l2finalAnswered:false, l3index:0,l3matched:0,l3answered:false };
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

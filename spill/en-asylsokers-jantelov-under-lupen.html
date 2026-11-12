@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Under lupen: En asylsøkers jantelov</title>
+<style>
+  :root{
+    --bg:#0f1729; --panel:#182238; --panel2:#1f2c48; --gold:#d4af6a;
+    --text:#eef1f7; --muted:#9aa7c2; --good:#5fbf7f; --bad:#e3667a; --accent:#5b8def;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:radial-gradient(circle at top, #1a2440, #0a0f1e 70%);
+    font-family:'Georgia', 'Times New Roman', serif; color:var(--text); padding:24px;
+  }
+  .wrap{max-width:820px; margin:0 auto;}
+  header{text-align:center; margin-bottom:24px;}
+  header h1{font-size:1.9rem; margin:0 0 6px; letter-spacing:.5px;}
+  header p{color:var(--muted); margin:0; font-size:.95rem;}
+  .badge-row{display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
+  .badge{background:var(--panel2); border:1px solid #33456d; padding:6px 14px; border-radius:20px; font-size:.8rem; color:var(--muted);}
+  .badge.active{border-color:var(--gold); color:var(--gold);}
+  .card{
+    background:var(--panel); border:1px solid #29365a; border-radius:14px; padding:28px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); margin-bottom:18px;
+  }
+  h2{color:var(--gold); font-size:1.3rem; margin-top:0;}
+  h3{color:var(--text); font-size:1.05rem;}
+  p{line-height:1.6;}
+  .lead{color:var(--muted);}
+  .options{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  button{
+    font-family:inherit; cursor:pointer; border:1px solid #3a4a72; background:var(--panel2);
+    color:var(--text); padding:12px 16px; border-radius:10px; font-size:.98rem; text-align:left;
+    transition:.15s;
+  }
+  button:hover:not(:disabled){border-color:var(--accent); background:#243357;}
+  button:disabled{cursor:default; opacity:.55;}
+  .opt-correct{border-color:var(--good) !important; background:#173324 !important;}
+  .opt-wrong{border-color:var(--bad) !important; background:#3a1c24 !important;}
+  .primary{
+    background:var(--gold); color:#20200a; border:none; font-weight:bold; text-align:center;
+  }
+  .primary:hover:not(:disabled){background:#e8c785;}
+  .ghost{background:transparent; border:1px solid #3a4a72; text-align:center;}
+  .feedback{margin-top:14px; padding:14px; border-radius:10px; font-size:.93rem; line-height:1.5;}
+  .feedback.good{background:#12301f; border:1px solid var(--good); color:#c9f2d6;}
+  .feedback.bad{background:#301419; border:1px solid var(--bad); color:#f6cdd4;}
+  .cats{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;}
+  @media (max-width:560px){.cats{grid-template-columns:1fr;}}
+  .evidence-box{background:#101a30; border:1px dashed #33456d; padding:16px; border-radius:10px; font-style:italic; margin-bottom:6px;}
+  .footer-nav{display:flex; justify-content:space-between; margin-top:20px; gap:10px; flex-wrap:wrap;}
+  .score-line{font-size:.9rem; color:var(--muted); margin-top:10px;}
+  .factbox{background:#101a30; border:1px solid #33456d; border-radius:10px; padding:16px; margin-top:14px; font-size:.9rem;}
+  .factbox h4{margin:0 0 6px; color:var(--gold); font-size:.95rem;}
+  textarea{
+    width:100%; min-height:120px; background:#101a30; border:1px solid #33456d; border-radius:10px;
+    color:var(--text); font-family:inherit; padding:12px; font-size:.95rem; resize:vertical;
+  }
+  ul{line-height:1.7;}
+  .progress{height:6px; background:#101a30; border-radius:4px; overflow:hidden; margin-top:14px;}
+  .progress-fill{height:100%; background:var(--gold); transition:width .3s;}
+  .center{text-align:center;}
+  .final-score{font-size:2.4rem; color:var(--gold); font-weight:bold; text-align:center; margin:6px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🔍 Under lupen: «En asylsøkers jantelov»</h1>
+    <p>Et dikt av Sumaya Jirde Ali (2017) — undersøk innholdet, plasseringen i den realistiske tradisjonen og temaet</p>
+    <div class="badge-row" id="badgeRow"></div>
+  </header>
+  <div id="app"></div>
+</div>
+
+<script>
+// ---------- DATA ----------
+const factsheet = {
+  "Kritisk realisme (1870–1880)": "Skarp og direkte samfunnskritikk. Forfatteren vil bevisst påvirke leseren til å ta standpunkt i en debatt (tendenslitteratur). Avdekker dobbeltmoral og maktforhold (Ibsen, Kielland).",
+  "Et moderne dikt (2017)": "Skrevet lenge etter realismeperioden. Har fri form uten fast rim eller rytme, bruker virkemidler som anafor og kiasme, og et lyrisk jeg/du/vi i stedet for fortalte hendelser og personer."
+};
+
+const level1 = [
+  {
+    q: "Hvem skrev diktet «En asylsøkers jantelov», og når ble det utgitt?",
+    options: [
+      "Cora Sandel, 1935",
+      "Sumaya Jirde Ali, 2017 (fra diktsamlingen Kvinner som hater menn)",
+      "Henrik Ibsen, 1881",
+      "Aksel Sandemose, 1933"
+    ],
+    correct: 1,
+    explain: "Diktet er skrevet av Sumaya Jirde Ali og utgitt i 2017 i diktsamlingen Kvinner som hater menn."
+  },
+  {
+    q: "Hva viser tittelen «En asylsøkers jantelov» til?",
+    options: [
+      "Til Janteloven fra Aksel Sandemoses roman En flyktning krysser sitt spor (1933)",
+      "Til en offisiell norsk lov om asylsøkere",
+      "Til en bibelsk tekst om nåde",
+      "Til en FN-konvensjon om flyktninger"
+    ],
+    correct: 0,
+    explain: "Janteloven er en kjent liste med uskrevne regler fra Sandemoses roman fra 1933. Ali bruker samme form til å vise hvilke uskrevne regler asylsøkere blir møtt med."
+  },
+  {
+    q: "Hvem er det lyriske «jeg» og «du» i diktet?",
+    options: [
+      "Jeg er en politiker, du er en asylsøker",
+      "Jeg er en journalist som intervjuer du",
+      "Begge er asylsøkere — det lyriske jeg forteller det lyriske du hvordan samfunnet ser på dem",
+      "Jeg er fortelleren uten noen sammenheng med asylsøkere"
+    ],
+    correct: 2,
+    explain: "Vi får inntrykk av at både det lyriske jeg og det lyriske du er asylsøkere, og at jeg forteller du om hvordan det norske samfunnet ser på dem."
+  },
+  {
+    q: "Hvilken form har diktet?",
+    options: [
+      "En sonett med fast rimmønster",
+      "En haiku",
+      "Firelinjede strofer med enderim",
+      "Fri form / prosadikt: to strofer uten fast rim eller rytme"
+    ],
+    correct: 3,
+    explain: "Diktet består av to strofer med 24 og 15 vers, uten enderim eller fast rytme. Derfor kalles det et prosadikt i fri form."
+  },
+  {
+    q: "Mange vers begynner med samme ord, f.eks. «Du er et tall...», «Du fremføres ofte...». Hva heter dette virkemiddelet?",
+    options: [
+      "Allitterasjon",
+      "Anafor",
+      "Sonettform",
+      "Enderim"
+    ],
+    correct: 1,
+    explain: "Dette er anafor — gjentakelse av det første ordet eller uttrykket i flere påfølgende vers. Det gir diktet sammenheng selv uten rim eller rytme."
+  },
+  {
+    q: "«Vi forteller deg at du ikke er klar for samfunnet enda / men egentlig er det / samfunnet som ikke er klart for deg.» Hvilket virkemiddel er dette, og hva uttrykker det?",
+    options: [
+      "Metafor — samfunnet sammenlignes med en bygning",
+      "Allegori — et religiøst bilde",
+      "Kiasme (krysstilling) — uttrykker at sannheten er motsatt av hva asylsøkere blir fortalt",
+      "Ren gjentakelse uten dypere mening"
+    ],
+    correct: 2,
+    explain: "Dette er en kiasme: to elementer bytter plass i vendingen. Den viser at det egentlig er samfunnet — ikke asylsøkeren — som ikke er «klart»."
+  },
+  {
+    q: "Hvem representerer «vi» i diktet?",
+    options: [
+      "Asylsøkerne selv",
+      "FN",
+      "Den brede norske befolkningen / majoritetssamfunnet",
+      "Familien til det lyriske jeg"
+    ],
+    correct: 2,
+    explain: "«Vi» står for den norske majoritetsbefolkningen, som stiller krav og forventninger til asylsøkeren uten selv å bli stilt til ansvar."
+  }
+];
+
+const level2Cards = [
+  {text:"Diktet kritiserer samfunnets urettferdige behandling av en gruppe mennesker, og vil tydelig påvirke leserens holdning — akkurat som tendenslitteraturen gjorde.", cat:"Kritisk realisme"},
+  {text:"Teksten avdekker en dobbeltmoral: asylsøkere blir fortalt at de ikke er klare for samfunnet, når det egentlig er samfunnet som ikke er klart for dem.", cat:"Kritisk realisme"},
+  {text:"Diktet tar tydelig side i en pågående samfunnsdebatt, slik Ibsen og Kielland gjorde på 1870–80-tallet.", cat:"Kritisk realisme"},
+  {text:"Diktet har ingen fortelling, ingen personer eller handlingsforløp — det er et kort, konsentrert dikt.", cat:"Et moderne dikt"},
+  {text:"Formen er fri, med anaforer og kiasmer i stedet for enderim og fast rytme.", cat:"Et moderne dikt"},
+  {text:"Diktet ble utgitt i 2017 — nesten 80 år etter at den realistiske tradisjonen (1850–1940) tok slutt.", cat:"Et moderne dikt"},
+  {text:"Diktet bruker ord som «prosent» og «sektordiagram» for å vise hvordan mennesker reduseres til statistikk.", cat:"Et moderne dikt"}
+];
+const categories2 = ["Kritisk realisme","Et moderne dikt"];
+
+const level3Cards = [
+  {text:"«Du er et tall i en bunke med andre tall / En prosent i noen andres sektordiagram»", theme:"Umenneskeliggjøring"},
+  {text:"«Rasismen har vært en trofast ledsager / Gjennom år og minner / minner og år / har den overlevd»", theme:"Rasisme"},
+  {text:"«Du fremføres ofte i profesjonelle settinger / Du er uønsket»", theme:"Følelsen av å være uønsket"},
+  {text:"«Vi forteller deg at du ikke er klar for samfunnet enda / men egentlig er det samfunnet som ikke er klart for deg»", theme:"Makt og sosial kontroll"},
+  {text:"Tittelen viser til Janteloven — en uskreven regelliste som forteller enkeltmennesket at det ikke skal tro det er noe.", theme:"Makt og sosial kontroll"},
+  {text:"Diktet er bygget opp som en rekke pålegg og forventninger til det lyriske du, nesten som en manual for hvordan man skal oppføre seg som asylsøker.", theme:"Følelsen av å være uønsket"}
+];
+const themes3 = ["Rasisme","Umenneskeliggjøring","Følelsen av å være uønsket","Makt og sosial kontroll"];
+
+// ---------- STATE ----------
+let state = {
+  screen: "start",
+  l1index: 0, l1score: 0, l1answered:false,
+  l2index: 0, l2score: 0, l2answered:false, l2finalAnswered:false,
+  l3index: 0, l3matched: 0, l3answered:false
+};
+
+const app = document.getElementById("app");
+const badgeRow = document.getElementById("badgeRow");
+
+function updateBadges(){
+  const stages = ["Start","Diktet","Plasseringen","Bevistavlen","Konklusjon"];
+  const activeIdx = {start:0, l1:1, l1res:1, l2intro:2, l2:2, l2final:2, l2res:2, l3intro:3, l3:3, l3reflect:3, final:4}[state.screen] ?? 0;
+  badgeRow.innerHTML = stages.map((s,i)=>`<div class="badge ${i===activeIdx?'active':''}">${s}</div>`).join("");
+}
+
+function render(){
+  updateBadges();
+  if(state.screen==="start") return renderStart();
+  if(state.screen==="l1") return renderL1();
+  if(state.screen==="l1res") return renderL1Result();
+  if(state.screen==="l2intro") return renderL2Intro();
+  if(state.screen==="l2") return renderL2();
+  if(state.screen==="l2final") return renderL2Final();
+  if(state.screen==="l2res") return renderL2Result();
+  if(state.screen==="l3intro") return renderL3Intro();
+  if(state.screen==="l3") return renderL3();
+  if(state.screen==="l3reflect") return renderL3Reflect();
+  if(state.screen==="final") return renderFinal();
+}
+
+// ---------- START ----------
+function renderStart(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Saken du skal undersøke</h2>
+      <p>Sumaya Jirde Alis dikt «En asylsøkers jantelov» (2017) låner navnet fra den kjente Janteloven — en uskreven liste over regler som forteller enkeltmennesket hvordan det skal oppføre seg. Her rettes den samme logikken mot asylsøkere i det norske samfunnet.</p>
+      <p class="lead">Din jobb har tre deler:</p>
+      <ul>
+        <li><b>Diktet</b> — forstå hva som faktisk skjer i teksten, og hvilke virkemidler den bruker.</li>
+        <li><b>Plasseringen</b> — vurder hvordan diktet forholder seg til den realistiske tradisjonen, selv om det er skrevet 80 år etter at perioden var over.</li>
+        <li><b>Bevistavlen</b> — avdekk hva diktet egentlig handler om.</li>
+      </ul>
+      <button class="primary" onclick="startL1()">Start undersøkelsen →</button>
+    </div>
+  `;
+}
+function startL1(){ state.screen="l1"; render(); }
+
+// ---------- LEVEL 1: INNHOLD ----------
+function renderL1(){
+  const q = level1[state.l1index];
+  const progress = Math.round((state.l1index/level1.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Diktet: Hva står det? (${state.l1index+1}/${level1.length})</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <h3 style="margin-top:20px;">${q.q}</h3>
+      <div class="options" id="opts">
+        ${q.options.map((o,i)=>`<button onclick="answerL1(${i})" id="l1opt${i}">${o}</button>`).join("")}
+      </div>
+      <div id="l1feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l1score}/${level1.length}</span>
+        <button class="primary" id="l1next" style="display:none" onclick="nextL1()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL1(i){
+  if(state.l1answered) return;
+  state.l1answered = true;
+  const q = level1[state.l1index];
+  document.querySelectorAll("#opts button").forEach((b,idx)=>{
+    b.disabled = true;
+    if(idx===q.correct) b.classList.add("opt-correct");
+    else if(idx===i) b.classList.add("opt-wrong");
+  });
+  const fb = document.getElementById("l1feedback");
+  const isCorrect = i===q.correct;
+  if(isCorrect) state.l1score++;
+  fb.innerHTML = `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig! ':'Ikke helt. '}${q.explain}</div>`;
+  document.getElementById("l1next").style.display = "inline-block";
+}
+function nextL1(){
+  state.l1index++;
+  state.l1answered = false;
+  if(state.l1index >= level1.length){ state.screen="l1res"; }
+  render();
+}
+function renderL1Result(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Diktet er kartlagt</h2>
+      <div class="final-score">${state.l1score} / ${level1.length}</div>
+      <p class="lead">Du har nå oversikt over hva diktet formidler og hvilke virkemidler det bruker: et lyrisk jeg som taler til et lyrisk du, med anaforer og kiasmer som gir teksten struktur uten rim eller rytme.</p>
+      <button class="primary" onclick="state.screen='l2intro'; render();">Fortsett til plasseringen →</button>
+    </div>
+  `;
+}
+
+// ---------- LEVEL 2: PLASSERING ----------
+function renderL2Intro(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Plasseringen: Hvor hører diktet hjemme?</h2>
+      <p>Den realistiske tradisjonen varte fra 1850 til 1940. Diktet er skrevet i 2017 — altså lenge etter. Likevel blir det ofte brukt som sammenligningstekst til perioden. Du får sju "spor" — sorter dem i riktig kategori.</p>
+      <div class="factbox">
+        ${Object.entries(factsheet).map(([k,v])=>`<h4>${k}</h4><p style="margin:0 0 10px;">${v}</p>`).join("")}
+      </div>
+      <button class="primary" onclick="state.screen='l2'; render();">Start sorteringen →</button>
+    </div>
+  `;
+}
+function renderL2(){
+  const c = level2Cards[state.l2index];
+  const progress = Math.round((state.l2index/level2Cards.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Spor ${state.l2index+1}/${level2Cards.length}</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box">${c.text}</div>
+      <p class="lead">Hvilken kategori hører dette kjennetegnet til?</p>
+      <div class="cats" id="cats2">
+        ${categories2.map(cat=>`<button onclick="answerL2('${cat}')" data-cat="${cat}">${cat}</button>`).join("")}
+      </div>
+      <div id="l2feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l2score}/${level2Cards.length}</span>
+        <button class="primary" id="l2next" style="display:none" onclick="nextL2()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL2(chosen){
+  if(state.l2answered) return;
+  state.l2answered = true;
+  const c = level2Cards[state.l2index];
+  document.querySelectorAll("#cats2 button").forEach(b=>{
+    b.disabled = true;
+    const cat = b.getAttribute("data-cat");
+    if(cat===c.cat) b.classList.add("opt-correct");
+    else if(cat===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===c.cat;
+  if(isCorrect) state.l2score++;
+  const key = Object.keys(factsheet).find(k=>k.startsWith(c.cat));
+  document.getElementById("l2feedback").innerHTML =
+    `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig — ':'Riktig svar er '+c.cat+'. '}${factsheet[key]}</div>`;
+  document.getElementById("l2next").style.display="inline-block";
+}
+function nextL2(){
+  state.l2index++;
+  state.l2answered = false;
+  if(state.l2index >= level2Cards.length){ state.screen="l2final"; }
+  render();
+}
+function renderL2Final(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Hovedspørsmålet: Passer diktet inn i den realistiske tradisjonen?</h2>
+      <p>Basert på det du nettopp har sortert — hvordan bør vi vurdere forholdet mellom diktet og realismen (1850–1940)?</p>
+      <div class="options" id="optsFinal">
+        <button onclick="answerL2Final(0)">Ja, diktet er skrevet i 1870 og er et rendyrket eksempel på kritisk realisme.</button>
+        <button onclick="answerL2Final(1)">Nei, diktet hører formelt ikke til perioden (skrevet 2017, i fri diktform), men det deler kritisk realismes ønske om å avdekke urett, makt og dobbeltmoral, og å påvirke leserens holdning.</button>
+        <button onclick="answerL2Final(2)">Nei, diktet har ingenting til felles med realismen i det hele tatt.</button>
+        <button onclick="answerL2Final(3)">Ja, fordi alle norske dikt automatisk regnes som realisme.</button>
+      </div>
+      <div id="l2finalFeedback"></div>
+      <div class="footer-nav">
+        <span></span>
+        <button class="primary" id="l2finalNext" style="display:none" onclick="state.screen='l2res'; render();">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL2Final(chosenIdx){
+  if(state.l2finalAnswered) return;
+  state.l2finalAnswered = true;
+  const correctIdx = 1;
+  document.querySelectorAll("#optsFinal button").forEach((b,idx)=>{
+    b.disabled = true;
+    if(idx===correctIdx) b.classList.add("opt-correct");
+    else if(idx===chosenIdx) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosenIdx===correctIdx;
+  if(isCorrect) state.l2score++;
+  document.getElementById("l2finalFeedback").innerHTML = `
+    <div class="feedback ${isCorrect?'good':'bad'}">
+    ${isCorrect?'Riktig! ':'Riktig svar er alternativ 2. '}
+    Diktet er en moderne tekst og hører formelt ikke til perioden 1850–1940. Men tematisk og i intensjon ligner det svært på kritisk realisme: det er samfunnskritisk, avdekker maktforhold og dobbeltmoral, og vil tydelig påvirke leserens holdning — akkurat som tendenslitteraturen gjorde. Derfor brukes diktet ofte som en moderne sammenligningstekst til den realistiske tradisjonen.
+    </div>`;
+  document.getElementById("l2finalNext").style.display="inline-block";
+}
+function renderL2Result(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Plasseringen er avklart</h2>
+      <div class="final-score">${state.l2score} / ${level2Cards.length+1}</div>
+      <p class="lead">«En asylsøkers jantelov» er en moderne tekst fra 2017, men den deler kritisk realismes samfunnskritiske blikk og ønske om å avdekke makt og dobbeltmoral.</p>
+      <button class="primary" onclick="state.screen='l3intro'; render();">Fortsett til bevistavlen →</button>
+    </div>
+  `;
+}
+
+// ---------- LEVEL 3: TEMA ----------
+function renderL3Intro(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Bevistavlen: Hva handler diktet egentlig om?</h2>
+      <p>Du får seks "bevis" fra diktet. Koble hvert bevis til det temaet det best illustrerer: <b>Rasisme</b>, <b>Umenneskeliggjøring</b>, <b>Følelsen av å være uønsket</b>, eller <b>Makt og sosial kontroll</b>.</p>
+      <button class="primary" onclick="state.screen='l3'; render();">Undersøk bevisene →</button>
+    </div>
+  `;
+}
+function renderL3(){
+  const c = level3Cards[state.l3index];
+  const progress = Math.round((state.l3index/level3Cards.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Bevis ${state.l3index+1}/${level3Cards.length}</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box">${c.text}</div>
+      <p class="lead">Hvilket tema hører dette beviset til?</p>
+      <div class="cats" id="cats3">
+        ${themes3.map(t=>`<button onclick="answerL3('${t}')" data-t="${t}">${t}</button>`).join("")}
+      </div>
+      <div id="l3feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l3matched}/${level3Cards.length}</span>
+        <button class="primary" id="l3next" style="display:none" onclick="nextL3()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL3(chosen){
+  if(state.l3answered) return;
+  state.l3answered = true;
+  const c = level3Cards[state.l3index];
+  document.querySelectorAll("#cats3 button").forEach(b=>{
+    b.disabled = true;
+    const t = b.getAttribute("data-t");
+    if(t===c.theme) b.classList.add("opt-correct");
+    else if(t===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===c.theme;
+  if(isCorrect) state.l3matched++;
+  document.getElementById("l3feedback").innerHTML =
+    `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig!':'Riktig tema er '+c.theme+'.'} Dette beviset knytter seg til <b>${c.theme}</b> i diktet.</div>`;
+  document.getElementById("l3next").style.display="inline-block";
+}
+function nextL3(){
+  state.l3index++;
+  state.l3answered = false;
+  if(state.l3index >= level3Cards.length){ state.screen="l3reflect"; }
+  render();
+}
+function renderL3Reflect(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Din konklusjon: Hva vil diktet si om makt?</h2>
+      <p class="lead">Skriv 3–5 setninger: Hvorfor tror du Sumaya Jirde Ali valgte å kalle diktet en «jantelov»? Hvem er det som bestemmer reglene i samfunnet, og hva sier diktet om det?</p>
+      <textarea id="reflectionText" placeholder="Skriv svaret ditt her..."></textarea>
+      <div class="footer-nav">
+        <button class="ghost" onclick="revealModel()">Vis et eksempel på svar</button>
+        <button class="primary" onclick="finishGame()">Fullfør undersøkelsen →</button>
+      </div>
+      <div id="modelAnswer"></div>
+    </div>
+  `;
+}
+function revealModel(){
+  document.getElementById("modelAnswer").innerHTML = `
+    <div class="factbox">
+      <h4>Eksempel på svar</h4>
+      <p style="margin:0;">Ved å kalle diktet en «jantelov» viser Ali at det er majoritetssamfunnet — «vi» i diktet — som bestemmer de uskrevne reglene asylsøkeren må følge, uten selv å bli stilt til ansvar. Diktet avslører at asylsøkeren aldri kan gjøre "nok" for å bli akseptert, fordi reglene egentlig ikke handler om integrering, men om å holde makten der den allerede er. Slik peker diktet, i tråd med kritisk realisme, på en urettferdig maktstruktur i samfunnet.</p>
+    </div>`;
+}
+function finishGame(){
+  state.reflection = document.getElementById("reflectionText").value;
+  state.screen = "final";
+  render();
+}
+
+// ---------- FINAL ----------
+function renderFinal(){
+  const total = state.l1score + state.l2score + state.l3matched;
+  const max = level1.length + (level2Cards.length+1) + level3Cards.length;
+  let verdict = "";
+  if(total/max > 0.85) verdict = "Skarpsindig leser! Du har god kontroll på innhold, plassering og tema.";
+  else if(total/max > 0.6) verdict = "Solid undersøkelsesarbeid — noen spor er verdt å se på en gang til.";
+  else verdict = "Saken er ikke helt løst ennå — gå gjerne en ny runde for å styrke bevisene dine.";
+
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Undersøkelsen er avsluttet</h2>
+      <div class="final-score">${total} / ${max}</div>
+      <p class="lead">${verdict}</p>
+    </div>
+    <div class="card">
+      <h3>Oppsummering av saken</h3>
+      <p><b>Innhold:</b> Et lyrisk jeg forteller et lyrisk du hvordan det norske majoritetssamfunnet («vi») ser på og møter asylsøkere — gjennom uskrevne regler, mistanke og krav om å «gjøre seg fortjent» til en plass i samfunnet.</p>
+      <p><b>Plassering:</b> Diktet er en moderne tekst fra 2017 og hører formelt ikke til den realistiske tradisjonen (1850–1940). Likevel deler det kritisk realismes samfunnskritiske blikk, og brukes ofte som en moderne sammenligningstekst til perioden.</p>
+      <p><b>Tema:</b> Rasisme, umenneskeliggjøring, følelsen av å være uønsket og makt/sosial kontroll — samlet i tittelens referanse til Janteloven, som viser hvordan uskrevne regler brukes til å holde enkeltmennesket nede.</p>
+      <div class="footer-nav">
+        <button class="ghost" onclick="downloadReflection()">Last ned refleksjonen din</button>
+        <button class="primary" onclick="restart()">Start undersøkelsen på nytt</button>
+      </div>
+    </div>
+  `;
+}
+function downloadReflection(){
+  const text = "Min konklusjon om «En asylsøkers jantelov» av Sumaya Jirde Ali:\\n\\n" + (state.reflection || "(ingen tekst skrevet)");
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "min-konklusjon-en-asylsokers-jantelov.txt";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function restart(){
+  state = { screen:"start", l1index:0,l1score:0,l1answered:false, l2index:0,l2score:0,l2answered:false,l2finalAnswered:false, l3index:0,l3matched:0,l3answered:false };
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

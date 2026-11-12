@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Etterforskningen: Kunsten å myrde</title>
+<style>
+  :root{
+    --bg:#0f1729; --panel:#182238; --panel2:#1f2c48; --gold:#d4af6a;
+    --text:#eef1f7; --muted:#9aa7c2; --good:#5fbf7f; --bad:#e3667a; --accent:#5b8def;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:radial-gradient(circle at top, #1a2440, #0a0f1e 70%);
+    font-family:'Georgia', 'Times New Roman', serif; color:var(--text); padding:24px;
+  }
+  .wrap{max-width:820px; margin:0 auto;}
+  header{text-align:center; margin-bottom:24px;}
+  header h1{font-size:1.9rem; margin:0 0 6px; letter-spacing:.5px;}
+  header p{color:var(--muted); margin:0; font-size:.95rem;}
+  .badge-row{display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
+  .badge{background:var(--panel2); border:1px solid #33456d; padding:6px 14px; border-radius:20px; font-size:.8rem; color:var(--muted);}
+  .badge.active{border-color:var(--gold); color:var(--gold);}
+  .card{
+    background:var(--panel); border:1px solid #29365a; border-radius:14px; padding:28px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); margin-bottom:18px;
+  }
+  h2{color:var(--gold); font-size:1.3rem; margin-top:0;}
+  h3{color:var(--text); font-size:1.05rem;}
+  p{line-height:1.6;}
+  .lead{color:var(--muted);}
+  .options{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  button{
+    font-family:inherit; cursor:pointer; border:1px solid #3a4a72; background:var(--panel2);
+    color:var(--text); padding:12px 16px; border-radius:10px; font-size:.98rem; text-align:left;
+    transition:.15s;
+  }
+  button:hover:not(:disabled){border-color:var(--accent); background:#243357;}
+  button:disabled{cursor:default; opacity:.55;}
+  .opt-correct{border-color:var(--good) !important; background:#173324 !important;}
+  .opt-wrong{border-color:var(--bad) !important; background:#3a1c24 !important;}
+  .primary{
+    background:var(--gold); color:#20200a; border:none; font-weight:bold; text-align:center;
+  }
+  .primary:hover:not(:disabled){background:#e8c785;}
+  .ghost{background:transparent; border:1px solid #3a4a72; text-align:center;}
+  .feedback{margin-top:14px; padding:14px; border-radius:10px; font-size:.93rem; line-height:1.5;}
+  .feedback.good{background:#12301f; border:1px solid var(--good); color:#c9f2d6;}
+  .feedback.bad{background:#301419; border:1px solid var(--bad); color:#f6cdd4;}
+  .cats{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;}
+  @media (max-width:560px){.cats{grid-template-columns:1fr;}}
+  .evidence-box{background:#101a30; border:1px dashed #33456d; padding:16px; border-radius:10px; font-style:italic; margin-bottom:6px;}
+  .footer-nav{display:flex; justify-content:space-between; margin-top:20px;}
+  .score-line{font-size:.9rem; color:var(--muted); margin-top:10px;}
+  .factbox{background:#101a30; border:1px solid #33456d; border-radius:10px; padding:16px; margin-top:14px; font-size:.9rem;}
+  .factbox h4{margin:0 0 6px; color:var(--gold); font-size:.95rem;}
+  textarea{
+    width:100%; min-height:120px; background:#101a30; border:1px solid #33456d; border-radius:10px;
+    color:var(--text); font-family:inherit; padding:12px; font-size:.95rem; resize:vertical;
+  }
+  ul{line-height:1.7;}
+  .progress{height:6px; background:#101a30; border-radius:4px; overflow:hidden; margin-top:14px;}
+  .progress-fill{height:100%; background:var(--gold); transition:width .3s;}
+  .center{text-align:center;}
+  .final-score{font-size:2.4rem; color:var(--gold); font-weight:bold; text-align:center; margin:6px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🔎 Etterforskningen: «Kunsten å myrde»</h1>
+    <p>En novelle av Cora Sandel — undersøk innholdet, sjangeren og temaet</p>
+    <div class="badge-row" id="badgeRow"></div>
+  </header>
+  <div id="app"></div>
+</div>
+
+<script>
+// ---------- DATA ----------
+const factsheet = {
+  "Poetisk realisme (1850–1870)": "Tro på at samfunnet kan forbedres gradvis. Fremdeles en idealiserende, harmonisk fortellerstil. Tendenslitteratur (f.eks. Camilla Collett) tar opp kvinnesak, men med et romantisk preg.",
+  "Kritisk realisme (1870–1880)": "Skarp og direkte samfunnskritikk (kirken, borgerskapets dobbeltmoral, skole, klasseforskjeller). Forfatteren vil bevisst påvirke leseren til å ta standpunkt i en debatt (Ibsen, Kielland).",
+  "Naturalisme (1880–1890)": "Mennesket styres av arv, drifter og miljø — fri vilje er nesten fraværende. Ofte brutale, direkte skildringer av fattigdom og sosial nød (Skram, Krohg).",
+  "Etisk realisme / nyrealisme (1900–1940)": "Et etisk dilemma står sentralt. Dypere blikk på karakterenes sammensatte indre liv og enkeltmenneskets plass i et samfunn i endring. Stilen er ofte antydende og underspilt."
+};
+
+const level1 = [
+  {
+    q: "Hvem er jeg-fortelleren i novellen?",
+    options: [
+      "En kvinne som har Francine som hushjelp en sommer i Frankrike",
+      "Francines mor",
+      "Germaines søster",
+      "En avisjournalist"
+    ],
+    correct: 0,
+    explain: "Novellen er bygget som en samtale mellom jeg-fortelleren og hushjelpen Francine, hjemme hos fortelleren i Frankrike."
+  },
+  {
+    q: "Hvem er Francine, og hvordan er hun knyttet til Germaine?",
+    options: [
+      "Francine er lege og har behandlet Germaine",
+      "Francine er hushjelp hos jeg-fortelleren, og er kusine av Germaine",
+      "Francine er Germaines mor",
+      "Francine er en politimann som etterforsker et dødsfall"
+    ],
+    correct: 1,
+    explain: "Francine jobber som hushjelp hos jeg-fortelleren, og er kusine av den avdøde Germaine."
+  },
+  {
+    q: "Hva har akkurat skjedd da novellen åpner?",
+    options: [
+      "Germaine har giftet seg",
+      "Francine har fått ny jobb",
+      "Francine kommer rett fra Germaines begravelse",
+      "Jeg-fortelleren skal flytte fra Frankrike"
+    ],
+    correct: 2,
+    explain: "Francine kommer uventet tilbake fra en begravelse — kusinen Germaine er død."
+  },
+  {
+    q: "Hvordan reagerer Francine på nyheten om dødsfallet?",
+    options: [
+      "Hun bryter fullstendig sammen i gråt",
+      "Hun nekter å tro at det er sant",
+      "Hun er påfallende rolig og fattet",
+      "Hun ler av situasjonen"
+    ],
+    correct: 2,
+    explain: "Francines rolige, nesten avmålte reaksjon er et av novellens mest slående trekk — den sier noe om hvor vanlig slike skjebner er i miljøet hun kommer fra."
+  },
+  {
+    q: "Hva viser tilbakeblikket i novellen at Germaine egentlig var som person?",
+    options: [
+      "En hard og kynisk kvinne",
+      "En pen, blid, men usedvanlig sjenert og stille pike",
+      "En kjent skuespillerinne",
+      "En streng og autoritær kvinne"
+    ],
+    correct: 1,
+    explain: "Jeg-fortelleren husker Germaine fra året før som pen og blid, men samtidig svært sjenert og stille."
+  },
+  {
+    q: "Hva var den egentlige årsaken til at Germaine døde?",
+    options: [
+      "Hun ble myrdet av en fremmed",
+      "Hun ble syk av en smittsom sykdom",
+      "Hun ble gravid utenfor ekteskap og ble støtt ut i skam av familien",
+      "Hun omkom i en ulykke"
+    ],
+    correct: 2,
+    explain: "Germaine ble gravid utenfor ekteskap. Familiens skam og fordømmelse presset henne til slutt i døden — det er dette tittelen 'Kunsten å myrde' spiller på."
+  },
+  {
+    q: "Hvilken fortellerteknikk bruker Cora Sandel for å avdekke handlingen for leseren?",
+    options: [
+      "En allvitende forteller som forklarer alt rett ut",
+      "Brevveksling mellom to søstre",
+      "En samtale/dialog mellom jeg-forteller og Francine, med et tilbakeblikk",
+      "Et strengt kronologisk handlingsforløp uten avbrudd"
+    ],
+    correct: 2,
+    explain: "Novellen er bygget som en dialog i nået, der et tilbakeblikk gradvis avslører hva som egentlig skjedde med Germaine."
+  }
+];
+
+const level2Cards = [
+  {text:"Harmonisk tro på at samfunnet kan forbedres gradvis, fremdeles med en romantisk, idealiserende fortellerstil.", cat:"Poetisk realisme"},
+  {text:"Kvinnesak debatteres, men mennesket skildres fortsatt nokså idealisert.", cat:"Poetisk realisme"},
+  {text:"Skarp og direkte kritikk av kirken og borgerskapets dobbeltmoral.", cat:"Kritisk realisme"},
+  {text:"Forfatteren vil bevisst påvirke leseren til å ta et standpunkt i en samfunnsdebatt (tendenslitteratur).", cat:"Kritisk realisme"},
+  {text:"Mennesket styres av arv, drifter og miljø — fri vilje er nesten fraværende.", cat:"Naturalisme"},
+  {text:"Brutale og direkte skildringer av fattigdom, prostitusjon og sosial nød.", cat:"Naturalisme"},
+  {text:"Et etisk dilemma står i sentrum, og fortelleren dveler ved karakterenes sammensatte indre liv.", cat:"Etisk realisme"},
+  {text:"En antydende, underspilt stil der mye holdes tilbake, og leseren må lese mellom linjene.", cat:"Etisk realisme"}
+];
+const categories2 = ["Poetisk realisme","Kritisk realisme","Naturalisme","Etisk realisme"];
+
+const level3Cards = [
+  {text:"Germaine blir hardt dømt av familien fordi hun fikk barn utenfor ekteskap, mens barnefarens ansvar aldri diskuteres på samme måte.", theme:"Dobbeltmoral"},
+  {text:"En ung kvinnes verdi og fremtid blir målt etter hennes seksuelle 'renhet', ikke etter hvem hun er som person.", theme:"Kvinners stilling"},
+  {text:"Familiens skam blir så tung å bære at Germaine til slutt ikke ser noen annen utvei enn å ta sitt eget liv.", theme:"Skam og sosial kontroll"},
+  {text:"Francines rolige, nesten avmålte reaksjon antyder at slike skjebner ikke er uvanlige i miljøet hun kommer fra.", theme:"Skam og sosial kontroll"},
+  {text:"Tittelen lover et mordmysterium, men novellen handler egentlig om sosial fordømmelse uten en synlig gjerningsperson.", theme:"Ironi"},
+  {text:"Det er samfunnets og familiens strenge moralkodeks — ikke en fysisk gjerningsmann — som fører til Germaines død.", theme:"Ironi"}
+];
+const themes3 = ["Dobbeltmoral","Kvinners stilling","Skam og sosial kontroll","Ironi"];
+
+// ---------- STATE ----------
+let state = {
+  screen: "start",
+  l1index: 0, l1score: 0, l1answered:false,
+  l2index: 0, l2score: 0, l2answered:false, l2finalAnswered:false,
+  l3index: 0, l3matched: 0, l3answered:false
+};
+
+const app = document.getElementById("app");
+const badgeRow = document.getElementById("badgeRow");
+
+function updateBadges(){
+  const stages = ["Start","Åstedet","Sporene","Bevistavlen","Konklusjon"];
+  const activeIdx = {start:0, l1:1, l1res:1, l2intro:2, l2:2, l2final:2, l2res:2, l3intro:3, l3:3, l3reflect:3, final:4}[state.screen] ?? 0;
+  badgeRow.innerHTML = stages.map((s,i)=>`<div class="badge ${i===activeIdx?'active':''}">${s}</div>`).join("");
+}
+
+function render(){
+  updateBadges();
+  if(state.screen==="start") return renderStart();
+  if(state.screen==="l1") return renderL1();
+  if(state.screen==="l1res") return renderL1Result();
+  if(state.screen==="l2intro") return renderL2Intro();
+  if(state.screen==="l2") return renderL2();
+  if(state.screen==="l2final") return renderL2Final();
+  if(state.screen==="l2res") return renderL2Result();
+  if(state.screen==="l3intro") return renderL3Intro();
+  if(state.screen==="l3") return renderL3();
+  if(state.screen==="l3reflect") return renderL3Reflect();
+  if(state.screen==="final") return renderFinal();
+}
+
+// ---------- START ----------
+function renderStart(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Saken du skal løse</h2>
+      <p>Tittelen «Kunsten å myrde» lover et mordmysterium. Men Cora Sandels novelle fra 1935 er ikke en vanlig krim — den er bygget som en stille samtale mellom en jeg-forteller og hushjelpen hennes, Francine, som nettopp har vært i sin kusine Germaines begravelse.</p>
+      <p class="lead">Din jobb som etterforsker har tre deler:</p>
+      <ul>
+        <li><b>Åstedet</b> — forstå hva som faktisk skjer i teksten.</li>
+        <li><b>Sporene</b> — finn ut hvilken litterær retning novellen hører til.</li>
+        <li><b>Bevistavlen</b> — avdekk hva teksten egentlig handler om, og hvem — eller hva — som «myrdet» Germaine.</li>
+      </ul>
+      <button class="primary" onclick="startL1()">Start etterforskningen →</button>
+    </div>
+  `;
+}
+function startL1(){ state.screen="l1"; render(); }
+
+// ---------- LEVEL 1: INNHOLD ----------
+function renderL1(){
+  const q = level1[state.l1index];
+  const progress = Math.round((state.l1index/level1.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Åstedet: Hva skjedde? (${state.l1index+1}/${level1.length})</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <h3 style="margin-top:20px;">${q.q}</h3>
+      <div class="options" id="opts">
+        ${q.options.map((o,i)=>`<button onclick="answerL1(${i})" id="l1opt${i}">${o}</button>`).join("")}
+      </div>
+      <div id="l1feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l1score}/${level1.length}</span>
+        <button class="primary" id="l1next" style="display:none" onclick="nextL1()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL1(i){
+  if(state.l1answered) return;
+  state.l1answered = true;
+  const q = level1[state.l1index];
+  document.querySelectorAll("#opts button").forEach((b,idx)=>{
+    b.disabled = true;
+    if(idx===q.correct) b.classList.add("opt-correct");
+    else if(idx===i) b.classList.add("opt-wrong");
+  });
+  const fb = document.getElementById("l1feedback");
+  const isCorrect = i===q.correct;
+  if(isCorrect) state.l1score++;
+  fb.innerHTML = `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig! ':'Ikke helt. '}${q.explain}</div>`;
+  document.getElementById("l1next").style.display = "inline-block";
+}
+function nextL1(){
+  state.l1index++;
+  state.l1answered = false;
+  if(state.l1index >= level1.length){ state.screen="l1res"; }
+  render();
+}
+function renderL1Result(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Åstedet er gjennomgått</h2>
+      <div class="final-score">${state.l1score} / ${level1.length}</div>
+      <p class="lead">Du har nå oversikt over hva som faktisk skjer i novellen: en tilsynelatende rolig samtale som gradvis avslører en tragisk skjebne — Germaines død etter at hun ble gravid utenfor ekteskap og støtt ut av familien.</p>
+      <button class="primary" onclick="state.screen='l2intro'; render();">Fortsett til sporene →</button>
+    </div>
+  `;
+}
+
+// ---------- LEVEL 2: SJANGER ----------
+function renderL2Intro(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Sporene: Hvilken litterær retning?</h2>
+      <p>Norsk realisme mellom 1850 og 1940 deles gjerne i fire perioder. Du får åtte "spor" — korte kjennetegn — som du skal plassere i riktig periode. Bruk faktaboksen hvis du trenger hjelp.</p>
+      <div class="factbox">
+        ${Object.entries(factsheet).map(([k,v])=>`<h4>${k}</h4><p style="margin:0 0 10px;">${v}</p>`).join("")}
+      </div>
+      <button class="primary" onclick="state.screen='l2'; render();">Start sporfasen →</button>
+    </div>
+  `;
+}
+function renderL2(){
+  const c = level2Cards[state.l2index];
+  const progress = Math.round((state.l2index/level2Cards.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Spor ${state.l2index+1}/${level2Cards.length}</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box">"${c.text}"</div>
+      <p class="lead">Hvilken periode hører dette kjennetegnet til?</p>
+      <div class="cats" id="cats2">
+        ${categories2.map(cat=>`<button onclick="answerL2('${cat}')" data-cat="${cat}">${cat}</button>`).join("")}
+      </div>
+      <div id="l2feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l2score}/${level2Cards.length}</span>
+        <button class="primary" id="l2next" style="display:none" onclick="nextL2()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL2(chosen){
+  if(state.l2answered) return;
+  state.l2answered = true;
+  const c = level2Cards[state.l2index];
+  document.querySelectorAll("#cats2 button").forEach(b=>{
+    b.disabled = true;
+    const cat = b.getAttribute("data-cat");
+    if(cat===c.cat) b.classList.add("opt-correct");
+    else if(cat===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===c.cat;
+  if(isCorrect) state.l2score++;
+  document.getElementById("l2feedback").innerHTML =
+    `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig — ':'Riktig svar er '+c.cat+'. '}${factsheet[Object.keys(factsheet).find(k=>k.startsWith(c.cat))]}</div>`;
+  document.getElementById("l2next").style.display="inline-block";
+}
+function nextL2(){
+  state.l2index++;
+  state.l2answered = false;
+  if(state.l2index >= level2Cards.length){ state.screen="l2final"; }
+  render();
+}
+function renderL2Final(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Hovedspørsmålet: Hvor hører novellen selv til?</h2>
+      <p>Cora Sandel skrev «Kunsten å myrde» i 1935. Basert på det du nettopp har sortert — hvilken retning passer novellen best inn i?</p>
+      <div class="options" id="optsFinal">
+        ${categories2.map((cat,i)=>`<button onclick="answerL2Final('${cat}')" id="l2f${i}">${cat}</button>`).join("")}
+      </div>
+      <div id="l2finalFeedback"></div>
+      <div class="footer-nav">
+        <span></span>
+        <button class="primary" id="l2finalNext" style="display:none" onclick="state.screen='l2res'; render();">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL2Final(chosen){
+  if(state.l2finalAnswered) return;
+  state.l2finalAnswered = true;
+  const correct = "Etisk realisme";
+  document.querySelectorAll("#optsFinal button").forEach(b=>{
+    b.disabled = true;
+    if(b.textContent===correct) b.classList.add("opt-correct");
+    else if(b.textContent===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===correct;
+  if(isCorrect) state.l2score++;
+  document.getElementById("l2finalFeedback").innerHTML = `
+    <div class="feedback ${isCorrect?'good':'bad'}">
+    ${isCorrect?'Riktig! ':'Riktig svar er etisk realisme (nyrealisme). '}
+    Novellen skildrer et etisk dilemma (skam og familieplikt), dveler ved karakterenes indre liv, og bruker en antydende, underspilt stil der mye må leses mellom linjene. Den låner naturalismens tro på at miljø og sosial status styrer skjebnen, men er langt mer psykologisk og subtil enn typisk naturalisme.
+    </div>`;
+  document.getElementById("l2finalNext").style.display="inline-block";
+}
+function renderL2Result(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Sporene er sikret</h2>
+      <div class="final-score">${state.l2score} / ${level2Cards.length+1}</div>
+      <p class="lead">«Kunsten å myrde» hører hjemme i etisk realisme (nyrealisme, ca. 1900–1940): et etisk dilemma, dyp interesse for sjeleliv, og en underspilt fortellerstil.</p>
+      <button class="primary" onclick="state.screen='l3intro'; render();">Fortsett til bevistavlen →</button>
+    </div>
+  `;
+}
+
+// ---------- LEVEL 3: TEMA ----------
+function renderL3Intro(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Bevistavlen: Hva handler novellen egentlig om?</h2>
+      <p>Du får seks biter med "bevis" fra novellen. Koble hvert bevis til det temaet det best illustrerer: <b>Dobbeltmoral</b>, <b>Kvinners stilling</b>, <b>Skam og sosial kontroll</b>, eller <b>Ironi</b>.</p>
+      <button class="primary" onclick="state.screen='l3'; render();">Undersøk bevisene →</button>
+    </div>
+  `;
+}
+function renderL3(){
+  const c = level3Cards[state.l3index];
+  const progress = Math.round((state.l3index/level3Cards.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Bevis ${state.l3index+1}/${level3Cards.length}</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box">${c.text}</div>
+      <p class="lead">Hvilket tema hører dette beviset til?</p>
+      <div class="cats" id="cats3">
+        ${themes3.map(t=>`<button onclick="answerL3('${t}')" data-t="${t}">${t}</button>`).join("")}
+      </div>
+      <div id="l3feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l3matched}/${level3Cards.length}</span>
+        <button class="primary" id="l3next" style="display:none" onclick="nextL3()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL3(chosen){
+  if(state.l3answered) return;
+  state.l3answered = true;
+  const c = level3Cards[state.l3index];
+  document.querySelectorAll("#cats3 button").forEach(b=>{
+    b.disabled = true;
+    const t = b.getAttribute("data-t");
+    if(t===c.theme) b.classList.add("opt-correct");
+    else if(t===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===c.theme;
+  if(isCorrect) state.l3matched++;
+  document.getElementById("l3feedback").innerHTML =
+    `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig!':'Riktig tema er '+c.theme+'.'} Dette beviset knytter seg til <b>${c.theme}</b> i novellen.</div>`;
+  document.getElementById("l3next").style.display="inline-block";
+}
+function nextL3(){
+  state.l3index++;
+  state.l3answered = false;
+  if(state.l3index >= level3Cards.length){ state.screen="l3reflect"; }
+  render();
+}
+function renderL3Reflect(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Din konklusjon: Hvem — eller hva — myrdet Germaine?</h2>
+      <p class="lead">Skriv 3–5 setninger der du svarer på spørsmålet over, og forklar hvorfor tittelen «Kunsten å myrde» er ironisk.</p>
+      <textarea id="reflectionText" placeholder="Skriv svaret ditt her..."></textarea>
+      <div class="footer-nav">
+        <button class="ghost" onclick="revealModel()">Vis et eksempel på svar</button>
+        <button class="primary" onclick="finishGame()">Fullfør etterforskningen →</button>
+      </div>
+      <div id="modelAnswer"></div>
+    </div>
+  `;
+}
+function revealModel(){
+  document.getElementById("modelAnswer").innerHTML = `
+    <div class="factbox">
+      <h4>Eksempel på svar</h4>
+      <p style="margin:0;">Det er ikke én enkelt person som myrder Germaine, men familiens skam og samfunnets dobbeltmoral: hun blir dømt hardt for å ha fått barn utenfor ekteskapet, mens ingen stiller barnefaren til ansvar på samme måte. Tittelen «Kunsten å myrde» er ironisk fordi den lover et fysisk mord, men det egentlige "drapsvåpenet" er taushet, fordømmelse og sosial utstøtelse.</p>
+    </div>`;
+}
+function finishGame(){
+  state.reflection = document.getElementById("reflectionText").value;
+  state.screen = "final";
+  render();
+}
+
+// ---------- FINAL ----------
+function renderFinal(){
+  const total = state.l1score + state.l2score + state.l3matched;
+  const max = level1.length + (level2Cards.length+1) + level3Cards.length;
+  let verdict = "";
+  if(total/max > 0.85) verdict = "Skarpsindig etterforsker! Du har god kontroll på innhold, sjanger og tema.";
+  else if(total/max > 0.6) verdict = "Solid etterforskningsarbeid — noen spor er verdt å se på en gang til.";
+  else verdict = "Saken er ikke helt løst ennå — gå gjerne en ny runde for å styrke bevisene dine.";
+
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Saken er avsluttet</h2>
+      <div class="final-score">${total} / ${max}</div>
+      <p class="lead">${verdict}</p>
+    </div>
+    <div class="card">
+      <h3>Oppsummering av saken</h3>
+      <p><b>Innhold:</b> En tilsynelatende rolig samtale mellom en jeg-forteller og hushjelpen Francine avslører gradvis at Francines kusine Germaine er død — presset i døden av skammen ved å bli gravid utenfor ekteskap.</p>
+      <p><b>Sjanger:</b> Novellen hører til etisk realisme (nyrealisme, ca. 1900–1940): et etisk dilemma, dyp interesse for det indre sjelelivet, og en antydende, underspilt fortellerstil.</p>
+      <p><b>Tema:</b> Dobbeltmoral, kvinners stilling, skam og sosial kontroll — samlet i en ironisk tittel som viser at det "mordet" som skjer, er sosialt og moralsk, ikke fysisk.</p>
+      <div class="footer-nav">
+        <button class="ghost" onclick="downloadReflection()">Last ned refleksjonen din</button>
+        <button class="primary" onclick="restart()">Start etterforskningen på nytt</button>
+      </div>
+    </div>
+  `;
+}
+function downloadReflection(){
+  const text = "Min konklusjon om «Kunsten å myrde» av Cora Sandel:\\n\\n" + (state.reflection || "(ingen tekst skrevet)");
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "min-konklusjon-kunsten-a-myrde.txt";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function restart(){
+  state = { screen:"start", l1index:0,l1score:0,l1answered:false, l2index:0,l2score:0,l2answered:false,l2finalAnswered:false, l3index:0,l3matched:0,l3answered:false };
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

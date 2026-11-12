@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bak fasaden: Gjengangere</title>
+<style>
+  :root{
+    --bg:#0f1729; --panel:#182238; --panel2:#1f2c48; --gold:#d4af6a;
+    --text:#eef1f7; --muted:#9aa7c2; --good:#5fbf7f; --bad:#e3667a; --accent:#5b8def;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:radial-gradient(circle at top, #1a2440, #0a0f1e 70%);
+    font-family:'Georgia', 'Times New Roman', serif; color:var(--text); padding:24px;
+  }
+  .wrap{max-width:820px; margin:0 auto;}
+  header{text-align:center; margin-bottom:24px;}
+  header h1{font-size:1.9rem; margin:0 0 6px; letter-spacing:.5px;}
+  header p{color:var(--muted); margin:0; font-size:.95rem;}
+  .badge-row{display:flex; justify-content:center; gap:10px; margin-top:14px; flex-wrap:wrap;}
+  .badge{background:var(--panel2); border:1px solid #33456d; padding:6px 14px; border-radius:20px; font-size:.8rem; color:var(--muted);}
+  .badge.active{border-color:var(--gold); color:var(--gold);}
+  .card{
+    background:var(--panel); border:1px solid #29365a; border-radius:14px; padding:28px;
+    box-shadow:0 10px 30px rgba(0,0,0,.35); margin-bottom:18px;
+  }
+  h2{color:var(--gold); font-size:1.3rem; margin-top:0;}
+  h3{color:var(--text); font-size:1.05rem;}
+  p{line-height:1.6;}
+  .lead{color:var(--muted);}
+  .options{display:flex; flex-direction:column; gap:10px; margin-top:16px;}
+  button{
+    font-family:inherit; cursor:pointer; border:1px solid #3a4a72; background:var(--panel2);
+    color:var(--text); padding:12px 16px; border-radius:10px; font-size:.98rem; text-align:left;
+    transition:.15s;
+  }
+  button:hover:not(:disabled){border-color:var(--accent); background:#243357;}
+  button:disabled{cursor:default; opacity:.55;}
+  .opt-correct{border-color:var(--good) !important; background:#173324 !important;}
+  .opt-wrong{border-color:var(--bad) !important; background:#3a1c24 !important;}
+  .primary{
+    background:var(--gold); color:#20200a; border:none; font-weight:bold; text-align:center;
+  }
+  .primary:hover:not(:disabled){background:#e8c785;}
+  .ghost{background:transparent; border:1px solid #3a4a72; text-align:center;}
+  .feedback{margin-top:14px; padding:14px; border-radius:10px; font-size:.93rem; line-height:1.5;}
+  .feedback.good{background:#12301f; border:1px solid var(--good); color:#c9f2d6;}
+  .feedback.bad{background:#301419; border:1px solid var(--bad); color:#f6cdd4;}
+  .cats{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:16px;}
+  @media (max-width:560px){.cats{grid-template-columns:1fr;}}
+  .evidence-box{background:#101a30; border:1px dashed #33456d; padding:16px; border-radius:10px; font-style:italic; margin-bottom:6px;}
+  .footer-nav{display:flex; justify-content:space-between; margin-top:20px; gap:10px; flex-wrap:wrap;}
+  .score-line{font-size:.9rem; color:var(--muted); margin-top:10px;}
+  .factbox{background:#101a30; border:1px solid #33456d; border-radius:10px; padding:16px; margin-top:14px; font-size:.9rem;}
+  .factbox h4{margin:0 0 6px; color:var(--gold); font-size:.95rem;}
+  textarea{
+    width:100%; min-height:120px; background:#101a30; border:1px solid #33456d; border-radius:10px;
+    color:var(--text); font-family:inherit; padding:12px; font-size:.95rem; resize:vertical;
+  }
+  ul{line-height:1.7;}
+  .progress{height:6px; background:#101a30; border-radius:4px; overflow:hidden; margin-top:14px;}
+  .progress-fill{height:100%; background:var(--gold); transition:width .3s;}
+  .center{text-align:center;}
+  .final-score{font-size:2.4rem; color:var(--gold); font-weight:bold; text-align:center; margin:6px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>👻 Bak fasaden: Gjengangere</h1>
+    <p>Et drama av Henrik Ibsen (1881) — undersøk innholdet, plasseringen i den realistiske tradisjonen og temaet</p>
+    <div class="badge-row" id="badgeRow"></div>
+  </header>
+  <div id="app"></div>
+</div>
+
+<script>
+// ---------- DATA ----------
+const factsheet = {
+  "Poetisk realisme (1850–1870)": "Tro på at samfunnet kan forbedres gradvis. Fremdeles en idealiserende, harmonisk fortellerstil. Tendenslitteratur tar opp kvinnesak, men med et romantisk preg.",
+  "Kritisk realisme (1870–1880)": "Skarp og direkte samfunnskritikk av kirken, borgerskapets dobbeltmoral, skole og klasseforskjeller. Forfatteren vil bevisst påvirke leseren til å ta standpunkt i en debatt (Ibsen, Kielland).",
+  "Naturalisme (1880–1890)": "Mennesket styres av arv, drifter og miljø — fri vilje er nesten fraværende. Ofte brutale, direkte skildringer av sykdom, seksualitet og sosial nød.",
+  "Etisk realisme / nyrealisme (1900–1940)": "Et etisk dilemma står sentralt. Dypere blikk på karakterenes sammensatte indre liv. Stilen er ofte antydende og underspilt."
+};
+
+const level1 = [
+  {
+    q: "Hvorfor har fru Alving bygget barnehjemmet til minne om sin avdøde mann, kammerherre Alving?",
+    options: [
+      "Fordi hun elsket ham høyt og savner ham",
+      "For å dekke over sannheten om hans utsvevende og umoralske liv, og sikre at han huskes som en god mann",
+      "Fordi kirken krevde det av henne",
+      "For å gi Osvald en arv å styre"
+    ],
+    correct: 1,
+    explain: "Barnehjemmet er en fasade: fru Alving bruker det til å skjule den virkelige sannheten om ektemannens løsslupne liv og bevare hans gode rykte utad."
+  },
+  {
+    q: "Hvem er Regine, og hva er hemmeligheten knyttet til hennes far?",
+    options: [
+      "Hun er tjenestepike hos fru Alving, offisielt datter av Engstrand — men i virkeligheten er hun kammerherre Alvings datter, og dermed Osvalds halvsøster",
+      "Hun er fru Alvings egen søster",
+      "Hun er Pastor Manders' datter",
+      "Hun er en gammel venninne av fru Alving fra ungdommen"
+    ],
+    correct: 0,
+    explain: "Regine tror hun er datter av snekkeren Engstrand, men hun er egentlig datter av kammerherre Alving og tjenestepiken Johanne — altså Osvalds halvsøster, uten at noen av dem vet det."
+  },
+  {
+    q: "Hvorfor sendte fru Alving Osvald bort hjemmefra som barn?",
+    options: [
+      "Fordi hun ikke hadde råd til å ha ham hjemme",
+      "For å beskytte ham mot farens dårlige moralske innflytelse",
+      "Fordi Pastor Manders krevde det",
+      "For at han skulle bli lege"
+    ],
+    correct: 1,
+    explain: "Fru Alving sendte Osvald bort som barn nettopp for å skjerme ham fra farens ødeleggende innflytelse — uten å vite at skaden allerede var arvelig."
+  },
+  {
+    q: "Hva slags sykdom rammer Osvald, og hvor kommer den fra?",
+    options: [
+      "En infeksjon han fikk i Paris av dårlig mat",
+      "En arvelig sykdom («ormstukket» hjerne) som stammer fra farens utsvevende liv",
+      "En arbeidsulykke som maler",
+      "En psykisk lidelse uten kjent årsak"
+    ],
+    correct: 1,
+    explain: "Osvald lider av en arvelig sykdom overført fra faren — et av dramaets sterkeste bilder på hvordan fortidens synder lever videre i neste generasjon."
+  },
+  {
+    q: "Hva ber Osvald moren sin om mot slutten av stykket?",
+    options: [
+      "Å hjelpe ham gifte seg med Regine",
+      "Å gi ham en dødelig dose morfin dersom sykdommen tar fra ham forstanden",
+      "Å selge barnehjemmet",
+      "Å reise tilbake til Paris med ham"
+    ],
+    correct: 1,
+    explain: "Osvald frykter å miste forstanden og ber moren love å gi ham en dødelig dose morfin når det skjer — et løfte som stiller fru Alving overfor et fryktelig dilemma i sluttscenen."
+  },
+  {
+    q: "Hva skjer med barnehjemmet, og hvordan reagerer Pastor Manders og Engstrand på det?",
+    options: [
+      "Det blir solgt til kommunen uten problemer",
+      "Det brenner ned, og Engstrand tilbyr seg å ta skylden mot at Manders støtter hans plan om et «sjømannshjem»",
+      "Det blir aldri ferdigstilt",
+      "Fru Alving river det selv fordi hun angrer"
+    ],
+    correct: 1,
+    explain: "Barnehjemmet brenner ned rett før åpningen. Engstrand tilbyr seg å ta skylden for brannen mot at Manders hjelper ham å finansiere et «sjømannshjem» — som i realiteten trolig blir et bordell."
+  },
+  {
+    q: "Hva mener fru Alving med det berømte utsagnet «Jeg tror vi er gjengangere allesammen»?",
+    options: [
+      "At huset er hjemsøkt av ekte spøkelser",
+      "At gamle, døde tanker, fordommer og vaner fra tidligere generasjoner lever videre i oss uten at vi er klar over det",
+      "At hun tror på reinkarnasjon",
+      "At Osvald kommer til å dø og bli et spøkelse"
+    ],
+    correct: 1,
+    explain: "«Gjengangere» er ikke bokstavelige spøkelser, men et bilde på hvordan foreldede moralske ideer, plikter og — som med Osvald — sykdommer, går i arv og hjemsøker de levende."
+  }
+];
+
+const level2Cards = [
+  {text:"Harmonisk tro på at samfunnet kan forbedres gradvis, fremdeles med en romantisk, idealiserende fortellerstil.", cat:"Poetisk realisme"},
+  {text:"Kvinnesak debatteres, men mennesket skildres fortsatt nokså idealisert.", cat:"Poetisk realisme"},
+  {text:"Pastor Manders tvang fru Alving tilbake til ekteskapet fordi «plikten» var viktigere enn hennes egen lykke — en direkte kritikk av kirkens makt over enkeltmennesket.", cat:"Kritisk realisme"},
+  {text:"Stykket avslører at kammerherre Alvings gode rykte er ren fasade — en tydelig avdekking av borgerskapets dobbeltmoral.", cat:"Kritisk realisme"},
+  {text:"Forfatteren vil bevisst få leseren til å ta stilling i en samfunnsdebatt om ekteskap, plikt og hykleri.", cat:"Kritisk realisme"},
+  {text:"Osvalds sykdom er arvet fra faren nesten uten at han selv har noen skyld eller fri vilje i saken.", cat:"Naturalisme"},
+  {text:"Et etisk dilemma står i sentrum, og fortelleren dveler ved karakterenes sammensatte indre liv.", cat:"Etisk realisme"},
+  {text:"En antydende, underspilt stil der mye holdes tilbake, og leseren må lese mellom linjene.", cat:"Etisk realisme"}
+];
+const categories2 = ["Poetisk realisme","Kritisk realisme","Naturalisme","Etisk realisme"];
+
+const level3Cards = [
+  {text:"Fru Alving bygger barnehjemmet for å dekke over sannheten om sin avdøde manns utsvevende liv, slik at han kan huskes som en god mann.", theme:"Dobbeltmoral og skinnmoral"},
+  {text:"Pastor Manders tvang henne tilbake til ekteskapet da hun en gang prøvde å forlate mannen sin, fordi «plikten» var viktigere enn hennes egen lykke.", theme:"Kirkens makt"},
+  {text:"Manders nøler med å forsikre barnehjemmet fordi det kan se ut som mistillit til Guds forsyn — og ender i stedet opp med å dekke over Engstrands brannstiftelse.", theme:"Kirkens makt"},
+  {text:"«Jeg tror vi er gjengangere allesammen» — gamle, døde tanker og fordommer lever videre i oss uten at vi vet det.", theme:"Arv – fortidens spøkelser"},
+  {text:"Osvald har arvet en dødelig sykdom fra sin far, uten selv å ha gjort noe galt.", theme:"Arv – fortidens spøkelser"},
+  {text:"Fru Alving har lest bøker med nye tanker om frihet og oppdragelse — noe som sjokkerer Pastor Manders, som mener slik lesning er farlig for en kvinne.", theme:"Kvinners undertrykkelse"}
+];
+const themes3 = ["Kirkens makt","Dobbeltmoral og skinnmoral","Arv – fortidens spøkelser","Kvinners undertrykkelse"];
+
+// ---------- STATE ----------
+let state = {
+  screen: "start",
+  l1index: 0, l1score: 0, l1answered:false,
+  l2index: 0, l2score: 0, l2answered:false, l2finalAnswered:false,
+  l3index: 0, l3matched: 0, l3answered:false
+};
+
+const app = document.getElementById("app");
+const badgeRow = document.getElementById("badgeRow");
+
+function updateBadges(){
+  const stages = ["Start","Huset","Sporene","Bevistavlen","Konklusjon"];
+  const activeIdx = {start:0, l1:1, l1res:1, l2intro:2, l2:2, l2final:2, l2res:2, l3intro:3, l3:3, l3reflect:3, final:4}[state.screen] ?? 0;
+  badgeRow.innerHTML = stages.map((s,i)=>`<div class="badge ${i===activeIdx?'active':''}">${s}</div>`).join("");
+}
+
+function render(){
+  updateBadges();
+  if(state.screen==="start") return renderStart();
+  if(state.screen==="l1") return renderL1();
+  if(state.screen==="l1res") return renderL1Result();
+  if(state.screen==="l2intro") return renderL2Intro();
+  if(state.screen==="l2") return renderL2();
+  if(state.screen==="l2final") return renderL2Final();
+  if(state.screen==="l2res") return renderL2Result();
+  if(state.screen==="l3intro") return renderL3Intro();
+  if(state.screen==="l3") return renderL3();
+  if(state.screen==="l3reflect") return renderL3Reflect();
+  if(state.screen==="final") return renderFinal();
+}
+
+// ---------- START ----------
+function renderStart(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Saken du skal undersøke</h2>
+      <p>Fru Alvings hjem virker rent og velordnet utad — et nybygget barnehjem, et godt rykte, en pen fasade. Men Henrik Ibsens drama «Gjengangere» (1881) river ned fasaden og avdekker hva som egentlig lever der: løgner, arvet sykdom og fortidens spøkelser.</p>
+      <p class="lead">Din jobb har tre deler:</p>
+      <ul>
+        <li><b>Huset</b> — forstå hva som faktisk skjer bak fasaden.</li>
+        <li><b>Sporene</b> — vurder hvordan stykket passer inn i den realistiske tradisjonen.</li>
+        <li><b>Bevistavlen</b> — avdekk hva stykket egentlig handler om.</li>
+      </ul>
+      <button class="primary" onclick="startL1()">Start etterforskningen →</button>
+    </div>
+  `;
+}
+function startL1(){ state.screen="l1"; render(); }
+
+// ---------- LEVEL 1: INNHOLD ----------
+function renderL1(){
+  const q = level1[state.l1index];
+  const progress = Math.round((state.l1index/level1.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Huset: Hva skjuler seg bak fasaden? (${state.l1index+1}/${level1.length})</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <h3 style="margin-top:20px;">${q.q}</h3>
+      <div class="options" id="opts">
+        ${q.options.map((o,i)=>`<button onclick="answerL1(${i})" id="l1opt${i}">${o}</button>`).join("")}
+      </div>
+      <div id="l1feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l1score}/${level1.length}</span>
+        <button class="primary" id="l1next" style="display:none" onclick="nextL1()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL1(i){
+  if(state.l1answered) return;
+  state.l1answered = true;
+  const q = level1[state.l1index];
+  document.querySelectorAll("#opts button").forEach((b,idx)=>{
+    b.disabled = true;
+    if(idx===q.correct) b.classList.add("opt-correct");
+    else if(idx===i) b.classList.add("opt-wrong");
+  });
+  const fb = document.getElementById("l1feedback");
+  const isCorrect = i===q.correct;
+  if(isCorrect) state.l1score++;
+  fb.innerHTML = `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig! ':'Ikke helt. '}${q.explain}</div>`;
+  document.getElementById("l1next").style.display = "inline-block";
+}
+function nextL1(){
+  state.l1index++;
+  state.l1answered = false;
+  if(state.l1index >= level1.length){ state.screen="l1res"; }
+  render();
+}
+function renderL1Result(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Huset er gjennomsøkt</h2>
+      <div class="final-score">${state.l1score} / ${level1.length}</div>
+      <p class="lead">Du har nå oversikt over hva som faktisk skjer i stykket: en fasade av respektabilitet som sprekker og avslører løgner, arvet sykdom og et fryktelig valg fru Alving til slutt må ta.</p>
+      <button class="primary" onclick="state.screen='l2intro'; render();">Fortsett til sporene →</button>
+    </div>
+  `;
+}
+
+// ---------- LEVEL 2: SJANGER ----------
+function renderL2Intro(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Sporene: Hvilken litterær retning?</h2>
+      <p>Norsk realisme mellom 1850 og 1940 deles gjerne i fire perioder. Du får åtte "spor" — korte kjennetegn — som du skal plassere i riktig periode. Bruk faktaboksen hvis du trenger hjelp.</p>
+      <div class="factbox">
+        ${Object.entries(factsheet).map(([k,v])=>`<h4>${k}</h4><p style="margin:0 0 10px;">${v}</p>`).join("")}
+      </div>
+      <button class="primary" onclick="state.screen='l2'; render();">Start sporfasen →</button>
+    </div>
+  `;
+}
+function renderL2(){
+  const c = level2Cards[state.l2index];
+  const progress = Math.round((state.l2index/level2Cards.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Spor ${state.l2index+1}/${level2Cards.length}</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box">"${c.text}"</div>
+      <p class="lead">Hvilken periode hører dette kjennetegnet til?</p>
+      <div class="cats" id="cats2">
+        ${categories2.map(cat=>`<button onclick="answerL2('${cat}')" data-cat="${cat}">${cat}</button>`).join("")}
+      </div>
+      <div id="l2feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l2score}/${level2Cards.length}</span>
+        <button class="primary" id="l2next" style="display:none" onclick="nextL2()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL2(chosen){
+  if(state.l2answered) return;
+  state.l2answered = true;
+  const c = level2Cards[state.l2index];
+  document.querySelectorAll("#cats2 button").forEach(b=>{
+    b.disabled = true;
+    const cat = b.getAttribute("data-cat");
+    if(cat===c.cat) b.classList.add("opt-correct");
+    else if(cat===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===c.cat;
+  if(isCorrect) state.l2score++;
+  const key = Object.keys(factsheet).find(k=>k.startsWith(c.cat));
+  document.getElementById("l2feedback").innerHTML =
+    `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig — ':'Riktig svar er '+c.cat+'. '}${factsheet[key]}</div>`;
+  document.getElementById("l2next").style.display="inline-block";
+}
+function nextL2(){
+  state.l2index++;
+  state.l2answered = false;
+  if(state.l2index >= level2Cards.length){ state.screen="l2final"; }
+  render();
+}
+function renderL2Final(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Hovedspørsmålet: Hvor hører stykket selv til?</h2>
+      <p>Henrik Ibsen skrev «Gjengangere» i 1881. Basert på det du nettopp har sortert — hvilken retning passer stykket best inn i?</p>
+      <div class="options" id="optsFinal">
+        ${categories2.map((cat,i)=>`<button onclick="answerL2Final('${cat}')" id="l2f${i}">${cat}</button>`).join("")}
+      </div>
+      <div id="l2finalFeedback"></div>
+      <div class="footer-nav">
+        <span></span>
+        <button class="primary" id="l2finalNext" style="display:none" onclick="state.screen='l2res'; render();">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL2Final(chosen){
+  if(state.l2finalAnswered) return;
+  state.l2finalAnswered = true;
+  const correct = "Kritisk realisme";
+  document.querySelectorAll("#optsFinal button").forEach(b=>{
+    b.disabled = true;
+    if(b.textContent===correct) b.classList.add("opt-correct");
+    else if(b.textContent===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===correct;
+  if(isCorrect) state.l2score++;
+  document.getElementById("l2finalFeedback").innerHTML = `
+    <div class="feedback ${isCorrect?'good':'bad'}">
+    ${isCorrect?'Riktig! ':'Riktig svar er kritisk realisme. '}
+    «Gjengangere» hører til kritisk realisme (1870–1880): stykket er en direkte og bevisst kritikk av kirkens makt (Pastor Manders) og borgerskapets dobbeltmoral (fasaden rundt kammerherre Alving). Det låner også naturalismens tanke om arv (Osvalds sykdom), men hovedmålet er å avsløre hykleri og få leseren/publikum til å ta stilling — nettopp det som kjennetegner kritisk realisme.
+    </div>`;
+  document.getElementById("l2finalNext").style.display="inline-block";
+}
+function renderL2Result(){
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Sporene er sikret</h2>
+      <div class="final-score">${state.l2score} / ${level2Cards.length+1}</div>
+      <p class="lead">«Gjengangere» hører hjemme i kritisk realisme (1870–1880): en skarp kritikk av kirken og borgerskapets dobbeltmoral, med et islett av naturalismens arvetanke.</p>
+      <button class="primary" onclick="state.screen='l3intro'; render();">Fortsett til bevistavlen →</button>
+    </div>
+  `;
+}
+
+// ---------- LEVEL 3: TEMA ----------
+function renderL3Intro(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Bevistavlen: Hva handler stykket egentlig om?</h2>
+      <p>Du får seks biter med "bevis" fra stykket. Koble hvert bevis til det temaet det best illustrerer: <b>Kirkens makt</b>, <b>Dobbeltmoral og skinnmoral</b>, <b>Arv – fortidens spøkelser</b>, eller <b>Kvinners undertrykkelse</b>.</p>
+      <button class="primary" onclick="state.screen='l3'; render();">Undersøk bevisene →</button>
+    </div>
+  `;
+}
+function renderL3(){
+  const c = level3Cards[state.l3index];
+  const progress = Math.round((state.l3index/level3Cards.length)*100);
+  app.innerHTML = `
+    <div class="card">
+      <h2>Bevis ${state.l3index+1}/${level3Cards.length}</h2>
+      <div class="progress"><div class="progress-fill" style="width:${progress}%"></div></div>
+      <div class="evidence-box">${c.text}</div>
+      <p class="lead">Hvilket tema hører dette beviset til?</p>
+      <div class="cats" id="cats3">
+        ${themes3.map(t=>`<button onclick="answerL3('${t}')" data-t="${t}">${t}</button>`).join("")}
+      </div>
+      <div id="l3feedback"></div>
+      <div class="footer-nav">
+        <span class="score-line">Poeng: ${state.l3matched}/${level3Cards.length}</span>
+        <button class="primary" id="l3next" style="display:none" onclick="nextL3()">Neste →</button>
+      </div>
+    </div>
+  `;
+}
+function answerL3(chosen){
+  if(state.l3answered) return;
+  state.l3answered = true;
+  const c = level3Cards[state.l3index];
+  document.querySelectorAll("#cats3 button").forEach(b=>{
+    b.disabled = true;
+    const t = b.getAttribute("data-t");
+    if(t===c.theme) b.classList.add("opt-correct");
+    else if(t===chosen) b.classList.add("opt-wrong");
+  });
+  const isCorrect = chosen===c.theme;
+  if(isCorrect) state.l3matched++;
+  document.getElementById("l3feedback").innerHTML =
+    `<div class="feedback ${isCorrect?'good':'bad'}">${isCorrect?'Riktig!':'Riktig tema er '+c.theme+'.'} Dette beviset knytter seg til <b>${c.theme}</b> i stykket.</div>`;
+  document.getElementById("l3next").style.display="inline-block";
+}
+function nextL3(){
+  state.l3index++;
+  state.l3answered = false;
+  if(state.l3index >= level3Cards.length){ state.screen="l3reflect"; }
+  render();
+}
+function renderL3Reflect(){
+  app.innerHTML = `
+    <div class="card">
+      <h2>Din konklusjon: Hva mener Ibsen med tittelen «Gjengangere»?</h2>
+      <p class="lead">Skriv 3–5 setninger der du svarer på spørsmålet over, og forklar hvorfor stykket fortsatt oppleves som aktuelt i dag.</p>
+      <textarea id="reflectionText" placeholder="Skriv svaret ditt her..."></textarea>
+      <div class="footer-nav">
+        <button class="ghost" onclick="revealModel()">Vis et eksempel på svar</button>
+        <button class="primary" onclick="finishGame()">Fullfør etterforskningen →</button>
+      </div>
+      <div id="modelAnswer"></div>
+    </div>
+  `;
+}
+function revealModel(){
+  document.getElementById("modelAnswer").innerHTML = `
+    <div class="factbox">
+      <h4>Eksempel på svar</h4>
+      <p style="margin:0;">Med «Gjengangere» mener Ibsen ikke bokstavelige spøkelser, men gamle, døde tanker, plikter og fordommer som lever videre i menneskene uten at de er klar over det — slik som Osvalds arvede sykdom er en fysisk «gjenganger» fra farens liv. Stykket er fortsatt aktuelt fordi det stiller spørsmål vi ennå strever med: hvor mye skal vi ofre egen lykke for plikt og et godt rykte, og hva skjer når vi later som om vonde sannheter ikke finnes?</p>
+    </div>`;
+}
+function finishGame(){
+  state.reflection = document.getElementById("reflectionText").value;
+  state.screen = "final";
+  render();
+}
+
+// ---------- FINAL ----------
+function renderFinal(){
+  const total = state.l1score + state.l2score + state.l3matched;
+  const max = level1.length + (level2Cards.length+1) + level3Cards.length;
+  let verdict = "";
+  if(total/max > 0.85) verdict = "Skarpsindig etterforsker! Du har god kontroll på innhold, sjanger og tema.";
+  else if(total/max > 0.6) verdict = "Solid etterforskningsarbeid — noen spor er verdt å se på en gang til.";
+  else verdict = "Saken er ikke helt løst ennå — gå gjerne en ny runde for å styrke bevisene dine.";
+
+  app.innerHTML = `
+    <div class="card center">
+      <h2>Saken er avsluttet</h2>
+      <div class="final-score">${total} / ${max}</div>
+      <p class="lead">${verdict}</p>
+    </div>
+    <div class="card">
+      <h3>Oppsummering av saken</h3>
+      <p><b>Innhold:</b> Bak fasaden til fru Alvings barnehjem avsløres sannheten om kammerherre Alvings utsvevende liv, Regines egentlige opphav, og Osvalds arvede sykdom — og stykket ender med et fryktelig moralsk valg for fru Alving.</p>
+      <p><b>Sjanger:</b> Stykket hører til kritisk realisme (1870–1880): en direkte kritikk av kirken og borgerskapets dobbeltmoral, med et innslag av naturalismens arvetanke.</p>
+      <p><b>Tema:</b> Kirkens makt, dobbeltmoral og skinnmoral, arvede «gjengangere» fra fortiden, og kvinners undertrykkelse — samlet i tittelens bilde av gamle tanker og synder som hjemsøker de levende.</p>
+      <div class="footer-nav">
+        <button class="ghost" onclick="downloadReflection()">Last ned refleksjonen din</button>
+        <button class="primary" onclick="restart()">Start etterforskningen på nytt</button>
+      </div>
+    </div>
+  `;
+}
+function downloadReflection(){
+  const text = "Min konklusjon om «Gjengangere» av Henrik Ibsen:\\n\\n" + (state.reflection || "(ingen tekst skrevet)");
+  const blob = new Blob([text], {type:"text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "min-konklusjon-gjengangere.txt";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function restart(){
+  state = { screen:"start", l1index:0,l1score:0,l1answered:false, l2index:0,l2score:0,l2answered:false,l2finalAnswered:false, l3index:0,l3matched:0,l3answered:false };
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
