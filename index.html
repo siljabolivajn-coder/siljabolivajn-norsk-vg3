@@ -70,13 +70,18 @@
   .topp-indre {
     max-width: 1100px; margin: 0 auto;
     padding: 3rem 1.25rem;
-    display: grid; grid-template-columns: 1fr minmax(0, 512px);
-    gap: 2.5rem; align-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.75rem;
+    text-align: center;
   }
   .topp h1 { font-size: clamp(2rem, 4.5vw, 3rem); }
-  .topp p { font-size: 1.2rem; max-width: 36ch; margin: .8rem 0 0; color: #e3f2f2; }
+  .topp p { font-size: 1.2rem; max-width: 36ch; margin: .8rem auto 0; color: #e3f2f2; }
   .topp img {
-    display: block; width: 100%; height: auto;
+    display: block;
+    width: min(100%, 760px);
+    height: auto;
     border-radius: 14px;
     box-shadow: 0 10px 30px rgba(0,0,0,.3);
   }
@@ -168,7 +173,7 @@
 
   /* ---------- Mobil ---------- */
   @media (max-width: 720px) {
-    .topp-indre { grid-template-columns: 1fr; gap: 1.5rem; padding: 2rem 1.25rem; }
+    .topp-indre { padding: 2rem 1.25rem; }
     .oppdateringer li { flex-direction: column; gap: .1rem; }
     .dato { flex: none; }
   }
@@ -190,11 +195,11 @@
 <!-- ===== TOPPBILDE ===== -->
 <header class="topp">
   <div class="topp-indre">
+    <img src="02-fjell-topp.webp" alt="Fjellandskap" width="512" height="343">
     <div>
       <h1>Velkommen til norsk for vg3!</h1>
       <p>Her kan du finne ulike ressurser du kan bruke i læringen din.</p>
     </div>
-    <img src="02-fjell-topp.webp" alt="Fjellandskap" width="512" height="343">
   </div>
 </header>
 
@@ -246,7 +251,7 @@
   <section id="om">
     <h2 class="seksjon-tittel">Om siden</h2>
     <div class="om">
-      <p>Hei og velkommen til denne nettsiden som tar for seg faget norsk for vg3. På denne nettsiden vil du finne forskjellige ressurser, oppgaver og spill som kan brukes i norskundervisningen.[...]</p>
+      <p>Hei og velkommen til denne nettsiden som tar for seg faget norsk for vg3. På denne nettsiden vil du finne forskjellige ressurser, oppgaver og spill som kan brukes i norskundervisningen.</p>
       <p>Alt innhold er laget av KI, og feil kan forekomme selv om jeg prøver å være nøye. Vær oppmerksom når du bruker KI-laget innhold.</p>
     </div>
   </section>
@@ -284,7 +289,7 @@
      De to nyeste får automatisk et «Ny»-merke.
      ========================================================= */
   const oppdateringer = [
-       { dato: "12.11.2026", tekst: "Ni nye spill er lagt ut under Spill – blant annet «Realismen under lupen» og to 8-bit-spill." },
+    { dato: "12.11.2026", tekst: "Ni nye spill er lagt ut under Spill – blant annet «Realismen under lupen» og to 8-bit-spill." },
     { dato: "12.11.2026", tekst: "Velkommen! Nettsiden for norsk vg3 er nå åpen. Nye ressurser kommer fortløpende." }
   ];
 
