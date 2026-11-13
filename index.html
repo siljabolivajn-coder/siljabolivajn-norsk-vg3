@@ -1,328 +1,49 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Norsk vg3 – ressurser</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --fjord: #1f6f78;      /* turkis vann */
-    --fjord-dyp: #134a52;
-    --fjell: #2c3a47;      /* mørk fjellgrå */
-    --mose: #5a7d3a;       /* grønt gress */
-    --hytte: #9e2b25;      /* rød hytte */
-    --sno: #f7f9f8;        /* snøhvit bakgrunn */
-    --kort: #ffffff;
-    --tekst: #22303a;
-    --dempet: #5d6b75;
-    --linje: #dde5e4;
-    --skygge: 0 2px 6px rgba(20, 50, 60, .06), 0 8px 24px rgba(20, 50, 60, .08);
-  }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0;
-    font-family: "Source Sans 3", system-ui, sans-serif;
-    font-size: 1.08rem;
-    line-height: 1.6;
-    color: var(--tekst);
-    background: var(--sno);
-  }
-  h1, h2, h3 { font-family: "Fraunces", Georgia, serif; line-height: 1.2; margin: 0; }
-  a { color: var(--fjord); }
-
-  /* ---------- Menylinje ---------- */
-  .meny {
-    position: sticky; top: 0; z-index: 10;
-    background: var(--fjell);
-    color: #fff;
-  }
-  .meny-indre {
-    max-width: 1100px; margin: 0 auto;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: .75rem 1.25rem;
-  }
-  .logo {
-    font-family: "Fraunces", Georgia, serif;
-    font-weight: 700; font-size: 1.25rem;
-    color: #fff; text-decoration: none;
-  }
-  .logo span { color: #8fd3d6; }
-  .meny ul { list-style: none; display: flex; gap: .25rem; margin: 0; padding: 0; }
-  .meny ul a {
-    display: block; padding: .45rem .9rem; border-radius: 6px;
-    color: #e8eef0; text-decoration: none; font-weight: 600;
-  }
-  .meny ul a:hover, .meny ul a:focus-visible { background: rgba(255,255,255,.12); color: #fff; }
-  .meny-knapp {
-    display: none; background: none; border: 1px solid rgba(255,255,255,.4);
-    color: #fff; border-radius: 6px; padding: .35rem .7rem; font-size: 1rem; cursor: pointer;
-  }
-
-  /* ---------- Toppbilde ---------- */
-  .topp {
-    background: linear-gradient(135deg, var(--fjord-dyp) 0%, var(--fjord) 100%);
-    color: #fff;
-  }
-  .topp-indre {
-    max-width: 1100px; margin: 0 auto;
-    padding: 3rem 1.25rem;
-    display: grid; grid-template-columns: 1fr minmax(0, 512px);
-    gap: 2.5rem; align-items: center;
-  }
-  .topp h1 { font-size: clamp(2rem, 4.5vw, 3rem); }
-  .topp p { font-size: 1.2rem; max-width: 36ch; margin: .8rem 0 0; color: #e3f2f2; }
-  .topp img {
-    display: block; width: 100%; height: auto;
-    border-radius: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.3);
-  }
-
-  /* ---------- Innhold ---------- */
-  main { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; }
-  section { padding: 3rem 0 1rem; scroll-margin-top: 4rem; }
-  .seksjon-tittel { font-size: 1.8rem; color: var(--fjell); }
-  .seksjon-ingress { color: var(--dempet); margin: .35rem 0 1.5rem; }
-
-  /* Kort */
-  .kortrutenett {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-    gap: 1.25rem;
-  }
-  .kort {
-    position: relative;
-    display: flex; flex-direction: column;
-    background: var(--kort);
-    border: 1px solid var(--linje);
-    border-top: 5px solid var(--farge, var(--fjord));
-    border-radius: 12px;
-    padding: 1.3rem 1.3rem 1.1rem;
-    text-decoration: none; color: inherit;
-    box-shadow: var(--skygge);
-    transition: transform .15s ease, box-shadow .15s ease;
-  }
-  a.kort:hover, a.kort:focus-visible { transform: translateY(-3px); box-shadow: 0 4px 10px rgba(20,50,60,.1), 0 14px 32px rgba(20,50,60,.14); }
-  .kort-ikon {
-    width: 3rem; height: 3rem; border-radius: 10px;
-    display: grid; place-items: center; font-size: 1.6rem;
-    background: color-mix(in srgb, var(--farge, var(--fjord)) 14%, white);
-    margin-bottom: .8rem;
-  }
-  .kort h3 { font-size: 1.3rem; color: var(--fjell); }
-  .kort p { margin: .35rem 0 .9rem; color: var(--dempet); font-size: 1rem; flex: 1; }
-  .kort-lenke { font-weight: 700; color: var(--farge, var(--fjord)); }
-  .kort.snart { opacity: .75; }
-  .kort .merke, .kort-lenke { align-self: flex-start; }
-  .merke {
-    display: inline-block; font-size: .8rem; font-weight: 700;
-    padding: .1rem .55rem; border-radius: 99px;
-    background: #eef1f1; color: var(--dempet);
-  }
-
-  /* Ressurslister */
-  .lenkeliste { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
-  .lenkeliste a {
-    display: block; background: var(--kort); border: 1px solid var(--linje);
-    border-radius: 10px; padding: 1rem 1.2rem; text-decoration: none; color: inherit;
-  }
-  .lenkeliste a:hover { border-color: var(--fjord); }
-  .lenkeliste strong { color: var(--fjord-dyp); }
-  .lenkeliste span { display: block; color: var(--dempet); font-size: .95rem; }
-
-  .plassholder {
-    background: var(--kort); border: 2px dashed var(--linje); border-radius: 12px;
-    padding: 1.5rem; color: var(--dempet); text-align: center;
-  }
-
-  /* Oppdateringer */
-  .oppdateringer {
-    background: var(--kort);
-    border: 1px solid var(--linje);
-    border-left: 6px solid var(--hytte);
-    border-radius: 12px;
-    padding: 1.5rem 1.6rem;
-    box-shadow: var(--skygge);
-  }
-  .oppdateringer h2 { font-size: 1.5rem; color: var(--fjell); display: flex; align-items: center; gap: .5rem; }
-  .oppdateringer ul { list-style: none; margin: 1rem 0 0; padding: 0; }
-  .oppdateringer li { display: flex; gap: 1rem; padding: .7rem 0; border-top: 1px solid var(--linje); }
-  .oppdateringer li:first-child { border-top: none; }
-  .dato { flex: 0 0 6.5rem; font-weight: 700; color: var(--hytte); font-size: .95rem; padding-top: .1rem; }
-  .ny { margin-left: .4rem; background: var(--hytte); color: #fff; }
-
-  .om { max-width: 65ch; }
-
-  /* ---------- Bunntekst ---------- */
-  footer {
-    margin-top: 3.5rem;
-    background: var(--fjell); color: #d6dfe2;
-    text-align: center; padding: 2rem 1.25rem;
-  }
-  footer .linje1 { font-family: "Fraunces", Georgia, serif; font-size: 1.15rem; color: #fff; }
-  footer .linje2 { margin-top: .3rem; font-size: .95rem; letter-spacing: .02em; }
-  footer .prikk { color: #8fd3d6; margin: 0 .5rem; }
-
-  /* ---------- Mobil ---------- */
-  @media (max-width: 720px) {
-    .topp-indre { grid-template-columns: 1fr; gap: 1.5rem; padding: 2rem 1.25rem; }
-    .oppdateringer li { flex-direction: column; gap: .1rem; }
-    .dato { flex: none; }
-  }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nynorsk – Norsk vg3</title>
+  <style>
+    :root { color-scheme: light; --fjord: #1f6f78; --fjell: #2c3a47; --bg: #f7f9f8; --line: #dde5e4; --muted: #5d6b75; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: #22303a; font: 1.08rem/1.6 system-ui, sans-serif; }
+    header { background: linear-gradient(135deg, #134a52, var(--fjord)); color: white; padding: 2rem 1.25rem; }
+    header > div, main { max-width: 900px; margin: 0 auto; }
+    header a { color: #d7f0ef; text-decoration: none; font-weight: 600; }
+    h1, h2 { font-family: Georgia, serif; line-height: 1.2; }
+    h1 { margin: 1rem 0 .4rem; font-size: clamp(2rem, 5vw, 3rem); }
+    header p { margin: 0; color: #e3f2f2; }
+    main { padding: 2rem 1.25rem; }
+    .ressurser { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+    .kort { display: block; padding: 1.4rem; background: white; border: 1px solid var(--line); border-top: 5px solid var(--fjord); border-radius: 12px; color: inherit; text-decoration: none; box-shadow: 0 8px 24px rgba(20,50,60,.08); }
+    .kort:hover, .kort:focus-visible { transform: translateY(-2px); border-color: var(--fjord); }
+    .kort h2 { margin: 0; color: var(--fjell); font-size: 1.4rem; }
+    .kort p { margin: .5rem 0 0; color: var(--muted); }
+    .pil { display: inline-block; margin-top: 1rem; color: var(--fjord); font-weight: 700; }
+  </style>
 </head>
 <body>
-
-<!-- ===== MENYLINJE ===== -->
-<nav class="meny" aria-label="Hovedmeny">
-  <div class="meny-indre">
-    <a class="logo" href="#">Norsk <span>vg3</span></a>
-    <button class="meny-knapp" aria-expanded="false" aria-controls="menyliste">☰ Meny</button>
-    <ul id="menyliste">
-      <li><a href="#om">Om</a></li>
-    </ul>
-  </div>
-</nav>
-
-<!-- ===== TOPPBILDE ===== -->
-<header class="topp">
-  <div class="topp-indre">
+  <header>
     <div>
-      <h1>Velkommen til norsk for vg3!</h1>
-      <p>Her kan du finne ulike ressurser du kan bruke i læringen din.</p>
+      <a href="../">← Tilbake til forsiden</a>
+      <h1>Nynorsk</h1>
+      <p>Øv på nynorsk med grammatikk, ord og spel.</p>
     </div>
-    <img src="toppbilde.webp" alt="Rød hytte ved en turkis fjellsjø med snøkledde fjell og bre i bakgrunnen" width="512" height="343">
-  </div>
-</header>
-
-<main>
-
-  <!-- ===== EMNER (kortene) ===== -->
-  <section id="emner">
-    <h2 class="seksjon-tittel">Emner</h2>
-    <p class="seksjon-ingress">Velg en mappe for å finne det du trenger.</p>
-    <div class="kortrutenett" id="kortrutenett"></div>
-  </section>
-
-  <!-- ===== RESSURSER ===== -->
-  <section id="ressurser">
-    <h2 class="seksjon-tittel">Ressurser</h2>
-    <p class="seksjon-ingress">Nyttige nettsteder i norskfaget.</p>
-    <div class="lenkeliste">
-      <a href="https://ordbokene.no" target="_blank" rel="noopener">
-        <strong>Ordbøkene.no</strong>
-        <span>Bokmålsordboka og Nynorskordboka</span>
+  </header>
+  <main>
+    <section class="ressurser" aria-label="Nynorskressursar">
+      <a class="kort" href="nynorskstigen.html">
+        <h2>Nynorskstigen</h2>
+        <p>Tren på nynorsk grammatikk og ordtilfang gjennom interaktive øvingar.</p>
+        <span class="pil">Start Nynorskstigen →</span>
       </a>
-      <a href="https://ndla.no" target="_blank" rel="noopener">
-        <strong>NDLA</strong>
-        <span>Fagstoff og oppgaver for videregående</span>
+      <a class="kort" href="nynorsk-jakta.html">
+        <h2>Nynorsk-jakta</h2>
+        <p>Fang nynorskorda og øv på å skilje nynorsk frå bokmål i eit spel.</p>
+        <span class="pil">Start Nynorsk-jakta →</span>
       </a>
-      <a href="https://www.sprakradet.no" target="_blank" rel="noopener">
-        <strong>Språkrådet</strong>
-        <span>Råd om rettskriving og språkbruk</span>
-      </a>
-    </div>
-  </section>
-
-  <!-- ===== KAPITLER ===== -->
-  <section id="kapitler">
-    <h2 class="seksjon-tittel">Kapitler</h2>
-    <p class="seksjon-ingress">Ressursene sortert etter kapitler i faget.</p>
-    <div class="plassholder">Kapitlene kommer snart.</div>
-  </section>
-
-  <!-- ===== OPPDATERINGER ===== -->
-  <section id="oppdateringer">
-    <div class="oppdateringer">
-      <h2>🔔 Oppdateringer</h2>
-      <ul id="oppdateringsliste"></ul>
-    </div>
-  </section>
-
-  <!-- ===== OM ===== -->
-  <section id="om">
-    <h2 class="seksjon-tittel">Om siden</h2>
-    <div class="om">
-      <p>Hei og velkommen til denne nettsiden som tar for seg faget norsk for vg3. På denne nettsiden vil du finne forskjellige ressurser, oppgaver og spill som kan brukes i norskundervisningen.</p>
-      <p>Alt innhold er laget av KI, og feil kan forekomme selv om jeg prøver å være nøye. Vær oppmerksom når du bruker KI-laget innhold.</p>
-    </div>
-  </section>
-
-</main>
-
-<!-- ===== BUNNTEKST ===== -->
-<footer>
-  <div class="linje1">Laget for norsk vg3</div>
-  <div class="linje2">
-    Silja Nordvik<span class="prikk">•</span><span id="aar">2026</span><span class="prikk">•</span>Faglig forankret kunnskap
-  </div>
-</footer>
-
-<script>
-  /* =========================================================
-     MAPPENE (kortene på forsiden)
-     - lenke: skriv mappenavnet når det finnes innhold, f.eks. "fagstoff/"
-     - lenke: "" betyr at kortet viser «Kommer snart»
-     ========================================================= */
-  const mapper = [
-    { tittel: "Fagstoff",        ikon: "📚", farge: "#1f6f78", tekst: "Forklaringer og teori du kan lese.",            lenke: "" },
-    { tittel: "Oppgaver",        ikon: "✏️", farge: "#5a7d3a", tekst: "Oppgaver til å jobbe med i og etter timen.",   lenke: "" },
-    { tittel: "Skrivetrening",   ikon: "📝", farge: "#2f5d8a", tekst: "Øv på ulike sjangre og bli en tryggere skriver.", lenke: "" },
-    { tittel: "Muntlig trening", ikon: "🎤", farge: "#b0632a", tekst: "Øvinger til presentasjoner og samtaler.",     lenke: "" },
-    { tittel: "Spill",           ikon: "🎲", farge: "#7a4e8c", tekst: "Lær gjennom quiz og spill.",                   lenke: "spill/" },
-    { tittel: "Nynorsk",         ikon: "🏔️", farge: "#3d7a6b", tekst: "Grammatikk, ordtilfang og skriveøving på nynorsk.", lenke: "nynorsk/" },
-    { tittel: "Eksamen",         ikon: "🎓", farge: "#9e2b25", tekst: "Forbered deg til eksamen med tips og tidligere oppgaver.", lenke: "" }
-  ];
-
-  /* =========================================================
-     OPPDATERINGER
-     Legg til nye beskjeder ØVERST i lista. Format:
-     { dato: "12.11.2026", tekst: "Det du vil si" },
-     De to nyeste får automatisk et «Ny»-merke.
-     ========================================================= */
-  const oppdateringer = [
-    { dato: "13.11.2026", tekst: "Ny Kahoot om nynorsk er lagt ut under Nynorsk." },
-    { dato: "12.11.2026", tekst: "Ni nye spill er lagt ut under Spill – blant annet «Realismen under lupen» og to 8-bit-spill." },
-    { dato: "12.11.2026", tekst: "Velkommen! Nettsiden for norsk vg3 er nå åpen. Nye ressurser kommer fortløpende." }
-  ];
-
-  /* ----- Det under trenger du ikke endre ----- */
-  const rutenett = document.getElementById("kortrutenett");
-  mapper.forEach(m => {
-    const el = document.createElement(m.lenke ? "a" : "div");
-    el.className = "kort" + (m.lenke ? "" : " snart");
-    if (m.lenke) el.href = m.lenke;
-    el.style.setProperty("--farge", m.farge);
-    el.innerHTML = `
-      <div class="kort-ikon" aria-hidden="true">${m.ikon}</div>
-      <h3>${m.tittel}</h3>
-      <p>${m.tekst}</p>
-      ${m.lenke ? '<span class="kort-lenke">Åpne mappen →</span>' : '<span class="merke">Kommer snart</span>'}`;
-    rutenett.appendChild(el);
-  });
-
-  const liste = document.getElementById("oppdateringsliste");
-  oppdateringer.forEach((o, i) => {
-    const li = document.createElement("li");
-    li.innerHTML = `<span class="dato">${o.dato}</span><span>${o.tekst}${i < 2 ? ' <span class="merke ny">Ny</span>' : ''}</span>`;
-    liste.appendChild(li);
-  });
-
-  document.getElementById("aar").textContent = new Date().getFullYear();
-
-  const knapp = document.querySelector(".meny-knapp");
-  const menyliste = document.getElementById("menyliste");
-  knapp.addEventListener("click", () => {
-    const apen = menyliste.classList.toggle("apen");
-    knapp.setAttribute("aria-expanded", apen);
-  });
-  menyliste.querySelectorAll("a").forEach(a => a.addEventListener("click", () => {
-    menyliste.classList.remove("apen");
-    knapp.setAttribute("aria-expanded", "false");
-  }));
-</script>
+    </section>
+  </main>
 </body>
 </html>
