@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nynorsk – Norsk vg3</title>
+<title>Norsk vg3 – ressurser</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -172,47 +172,88 @@
     .oppdateringer li { flex-direction: column; gap: .1rem; }
     .dato { flex: none; }
   }
-
-  .topp-liten { background: linear-gradient(135deg, var(--fjord-dyp) 0%, var(--fjord) 100%); color:#fff; }
-  .topp-liten .indre { max-width:1100px; margin:0 auto; padding:2.2rem 1.25rem 2.4rem; }
-  .tilbake { display:inline-block; color:#cdeeee; text-decoration:none; font-weight:600; margin-bottom:.8rem; }
-  .tilbake:hover { color:#fff; text-decoration:underline; }
-  .topp-liten h1 { font-size: clamp(2rem,4.5vw,2.8rem); }
-  .topp-liten p { color:#e3f2f2; font-size:1.15rem; margin:.5rem 0 0; max-width:55ch; }
-  .meta { font-size:.9rem; font-weight:600; color: var(--farge, var(--fjord)); margin-top:.15rem; }
-  .kort .merke { margin-top:.6rem; }
-  .rekkefolge { counter-reset: n; }
-  .rekkefolge .kort::before { counter-increment:n; content: counter(n); position:absolute; top:1rem; right:1.1rem;
-     width:1.8rem; height:1.8rem; border-radius:50%; display:grid; place-items:center; font-weight:700; font-size:.95rem;
-     background: color-mix(in srgb, var(--farge) 14%, white); color: var(--farge); }
-  .avslutning { margin-top:1.25rem; }
-  .avslutning .kort { border-top-width:5px; background: linear-gradient(180deg, #fbfdf8, #fff); }
-
-  main { min-height: 55vh; }
-  .tom { background: var(--kort); border: 2px dashed var(--linje); border-radius: 12px; padding: 1.3rem; color: var(--dempet); text-align: center; }
 </style>
 </head>
 <body>
 
+<!-- ===== MENYLINJE ===== -->
 <nav class="meny" aria-label="Hovedmeny">
   <div class="meny-indre">
-    <a class="logo" href="../">Norsk <span>vg3</span></a>
-    <ul>
-      <li><a href="../#om">Om</a></li>
+    <a class="logo" href="#">Norsk <span>vg3</span></a>
+    <button class="meny-knapp" aria-expanded="false" aria-controls="menyliste">☰ Meny</button>
+    <ul id="menyliste">
+      <li><a href="#om">Om</a></li>
     </ul>
   </div>
 </nav>
 
-<header class="topp-liten">
-  <div class="indre">
-    <a class="tilbake" href="../">← Tilbake til forsiden</a>
-    <h1>🏔️ Nynorsk</h1>
-    <p>Grammatikk, ordtilfang og skriveøving på nynorsk.</p>
+<!-- ===== TOPPBILDE ===== -->
+<header class="topp">
+  <div class="topp-indre">
+    <div>
+      <h1>Velkommen til norsk for vg3!</h1>
+      <p>Her kan du finne ulike ressurser du kan bruke i læringen din.</p>
+    </div>
+    <img src="toppbilde.webp" alt="Rød hytte ved en turkis fjellsjø med snøkledde fjell og bre i bakgrunnen" width="512" height="343">
   </div>
 </header>
 
-<main id="innhold"></main>
+<main>
 
+  <!-- ===== EMNER (kortene) ===== -->
+  <section id="emner">
+    <h2 class="seksjon-tittel">Emner</h2>
+    <p class="seksjon-ingress">Velg en mappe for å finne det du trenger.</p>
+    <div class="kortrutenett" id="kortrutenett"></div>
+  </section>
+
+  <!-- ===== RESSURSER ===== -->
+  <section id="ressurser">
+    <h2 class="seksjon-tittel">Ressurser</h2>
+    <p class="seksjon-ingress">Nyttige nettsteder i norskfaget.</p>
+    <div class="lenkeliste">
+      <a href="https://ordbokene.no" target="_blank" rel="noopener">
+        <strong>Ordbøkene.no</strong>
+        <span>Bokmålsordboka og Nynorskordboka</span>
+      </a>
+      <a href="https://ndla.no" target="_blank" rel="noopener">
+        <strong>NDLA</strong>
+        <span>Fagstoff og oppgaver for videregående</span>
+      </a>
+      <a href="https://www.sprakradet.no" target="_blank" rel="noopener">
+        <strong>Språkrådet</strong>
+        <span>Råd om rettskriving og språkbruk</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ===== KAPITLER ===== -->
+  <section id="kapitler">
+    <h2 class="seksjon-tittel">Kapitler</h2>
+    <p class="seksjon-ingress">Ressursene sortert etter kapitler i faget.</p>
+    <div class="plassholder">Kapitlene kommer snart.</div>
+  </section>
+
+  <!-- ===== OPPDATERINGER ===== -->
+  <section id="oppdateringer">
+    <div class="oppdateringer">
+      <h2>🔔 Oppdateringer</h2>
+      <ul id="oppdateringsliste"></ul>
+    </div>
+  </section>
+
+  <!-- ===== OM ===== -->
+  <section id="om">
+    <h2 class="seksjon-tittel">Om siden</h2>
+    <div class="om">
+      <p>Hei og velkommen til denne nettsiden som tar for seg faget norsk for vg3. På denne nettsiden vil du finne forskjellige ressurser, oppgaver og spill som kan brukes i norskundervisningen.</p>
+      <p>Alt innhold er laget av KI, og feil kan forekomme selv om jeg prøver å være nøye. Vær oppmerksom når du bruker KI-laget innhold.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ===== BUNNTEKST ===== -->
 <footer>
   <div class="linje1">Laget for norsk vg3</div>
   <div class="linje2">
@@ -222,45 +263,66 @@
 
 <script>
   /* =========================================================
-     LENKER PÅ NYNORSK-SIDEN
-     Legg til en ny lenke ved å kopiere en linje og endre den.
-     type: "kahoot", "video", "spill", "oppgave" eller "lenke"
+     MAPPENE (kortene på forsiden)
+     - lenke: skriv mappenavnet når det finnes innhold, f.eks. "fagstoff/"
+     - lenke: "" betyr at kortet viser «Kommer snart»
      ========================================================= */
-  const lenker = [
-    { type: "kahoot", tittel: "Kahoot: Nynorsk", tekst: "Test deg selv i nynorsk.", lenke: "https://play.kahoot.it/v2/?quizId=9c8010d9-6c6b-4c38-a816-1a0699a34fb6" }
+  const mapper = [
+    { tittel: "Fagstoff",        ikon: "📚", farge: "#1f6f78", tekst: "Forklaringer og teori du kan lese.",            lenke: "" },
+    { tittel: "Oppgaver",        ikon: "✏️", farge: "#5a7d3a", tekst: "Oppgaver til å jobbe med i og etter timen.",   lenke: "" },
+    { tittel: "Skrivetrening",   ikon: "📝", farge: "#2f5d8a", tekst: "Øv på ulike sjangre og bli en tryggere skriver.", lenke: "" },
+    { tittel: "Muntlig trening", ikon: "🎤", farge: "#b0632a", tekst: "Øvinger til presentasjoner og samtaler.",     lenke: "" },
+    { tittel: "Spill",           ikon: "🎲", farge: "#7a4e8c", tekst: "Lær gjennom quiz og spill.",                   lenke: "spill/" },
+    { tittel: "Nynorsk",         ikon: "🏔️", farge: "#3d7a6b", tekst: "Grammatikk, ordtilfang og skriveøving på nynorsk.", lenke: "nynorsk/" },
+    { tittel: "Eksamen",         ikon: "🎓", farge: "#9e2b25", tekst: "Forbered deg til eksamen med tips og tidligere oppgaver.", lenke: "" }
+  ];
+
+  /* =========================================================
+     OPPDATERINGER
+     Legg til nye beskjeder ØVERST i lista. Format:
+     { dato: "12.11.2026", tekst: "Det du vil si" },
+     De to nyeste får automatisk et «Ny»-merke.
+     ========================================================= */
+  const oppdateringer = [
+    { dato: "13.11.2026", tekst: "Ny Kahoot om nynorsk er lagt ut under Nynorsk." },
+    { dato: "12.11.2026", tekst: "Ni nye spill er lagt ut under Spill – blant annet «Realismen under lupen» og to 8-bit-spill." },
+    { dato: "12.11.2026", tekst: "Velkommen! Nettsiden for norsk vg3 er nå åpen. Nye ressurser kommer fortløpende." }
   ];
 
   /* ----- Det under trenger du ikke endre ----- */
-  const typer = {
-    kahoot:  { overskrift: "Kahoot",    ikon: "🎯", farge: "#46178f", knapp: "Åpne Kahoot ↗" },
-    video:   { overskrift: "Videoer",   ikon: "🎬", farge: "#c4302b", knapp: "Se videoen ↗" },
-    spill:   { overskrift: "Spill",     ikon: "🎲", farge: "#7a4e8c", knapp: "Start spillet →" },
-    oppgave: { overskrift: "Oppgaver",  ikon: "✏️", farge: "#5a7d3a", knapp: "Åpne oppgaven →" },
-    lenke:   { overskrift: "Andre lenker", ikon: "🔗", farge: "#1f6f78", knapp: "Åpne lenken ↗" }
-  };
-  const main = document.getElementById("innhold");
-  const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-  let noe = false;
-  Object.entries(typer).forEach(([type, t]) => {
-    const liste = lenker.filter(l => l.type === type);
-    if (!liste.length) return;
-    noe = true;
-    const sek = document.createElement("section");
-    sek.innerHTML = `<h2 class="seksjon-tittel">${t.overskrift}</h2><div class="kortrutenett" style="margin-top:1.2rem"></div>`;
-    const rut = sek.querySelector(".kortrutenett");
-    liste.forEach(l => {
-      const ekstern = /^https?:/.test(l.lenke);
-      const a = document.createElement("a");
-      a.className = "kort"; a.href = l.lenke;
-      if (ekstern) { a.target = "_blank"; a.rel = "noopener"; }
-      a.style.setProperty("--farge", t.farge);
-      a.innerHTML = `<div class="kort-ikon" aria-hidden="true">${t.ikon}</div><h3>${esc(l.tittel)}</h3><p>${esc(l.tekst || "")}</p><span class="kort-lenke">${t.knapp}</span>`;
-      rut.appendChild(a);
-    });
-    main.appendChild(sek);
+  const rutenett = document.getElementById("kortrutenett");
+  mapper.forEach(m => {
+    const el = document.createElement(m.lenke ? "a" : "div");
+    el.className = "kort" + (m.lenke ? "" : " snart");
+    if (m.lenke) el.href = m.lenke;
+    el.style.setProperty("--farge", m.farge);
+    el.innerHTML = `
+      <div class="kort-ikon" aria-hidden="true">${m.ikon}</div>
+      <h3>${m.tittel}</h3>
+      <p>${m.tekst}</p>
+      ${m.lenke ? '<span class="kort-lenke">Åpne mappen →</span>' : '<span class="merke">Kommer snart</span>'}`;
+    rutenett.appendChild(el);
   });
-  if (!noe) main.innerHTML = '<section><div class="tom">Det kommer innhold her snart.</div></section>';
+
+  const liste = document.getElementById("oppdateringsliste");
+  oppdateringer.forEach((o, i) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="dato">${o.dato}</span><span>${o.tekst}${i < 2 ? ' <span class="merke ny">Ny</span>' : ''}</span>`;
+    liste.appendChild(li);
+  });
+
   document.getElementById("aar").textContent = new Date().getFullYear();
+
+  const knapp = document.querySelector(".meny-knapp");
+  const menyliste = document.getElementById("menyliste");
+  knapp.addEventListener("click", () => {
+    const apen = menyliste.classList.toggle("apen");
+    knapp.setAttribute("aria-expanded", apen);
+  });
+  menyliste.querySelectorAll("a").forEach(a => a.addEventListener("click", () => {
+    menyliste.classList.remove("apen");
+    knapp.setAttribute("aria-expanded", "false");
+  }));
 </script>
 </body>
 </html>
